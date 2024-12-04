@@ -4323,4 +4323,5 @@
     <string name="rotate_screen">Rotate screen</string>
     <string name="filter_charts">Filter charts</string>
     <string name="recovery_heart_rate">Recovery Heart rate</string>
+    <string name="devicetype_raven">Raven Smartwatch</string>
 </resources>
