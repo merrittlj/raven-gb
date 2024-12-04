@@ -8,14 +8,14 @@ import androidx.annotation.Nullable;
 import java.util.regex.Pattern;
 
 import nodomain.freeyourgadget.gadgetbridge.R;
-import nodomain.freeyourgadget.gadgetbridge.devices.AbstractDeviceCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.AbstractBLEDeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.entities.DaoSession;
 import nodomain.freeyourgadget.gadgetbridge.entities.Device;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.service.DeviceSupport;
-import nodomain.freeyourgadget.gadgetbridge.service.devices.unknown.UnknownDeviceSupport;
+import nodomain.freeyourgadget.gadgetbridge.service.devices.raven.RavenSupport;
 
-public class RavenCoordinator extends AbstractDeviceCoordinator {
+public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public int getDeviceNameResource() {
         return R.string.devicetype_raven;
@@ -39,7 +39,7 @@ public class RavenCoordinator extends AbstractDeviceCoordinator {
     @NonNull
     @Override
     public Class<? extends DeviceSupport> getDeviceSupportClass() {
-        return UnknownDeviceSupport.class;
+        return RavenSupport.class;
     }
 
     @Override
@@ -61,6 +61,13 @@ public class RavenCoordinator extends AbstractDeviceCoordinator {
     @Override
     public boolean supportsWeather() {
         return false;
+    }
+
+    @Override
+    public int[] getSupportedDeviceSpecificSettings(GBDevice device) {
+        return new int[] {
+                R.xml.devicesettings_time_sync
+        };
     }
 
     @Override
