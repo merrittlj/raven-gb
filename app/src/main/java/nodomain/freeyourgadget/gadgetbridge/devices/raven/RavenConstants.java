@@ -3,7 +3,8 @@ package nodomain.freeyourgadget.gadgetbridge.devices.raven;
 import java.util.UUID;
 
 public final class RavenConstants {
-    public static final UUID UUID_SERVICE_NOTIF = UUID.fromString("9959a5e0-b1de-11ef-be87-0800200c9a66");
-    public static final UUID UUID_CHARACTERISTIC_NOTIF_APP = UUID.fromString("9959a5e1-b1de-11ef-be87-0800200c9a66");
-    public static final UUID UUID_CHARACTERISTIC_NOTIF_TITLE = UUID.fromString("9959a5e2-b1de-11ef-be87-0800200c9a66");
+    public static final UUID UUID_SERVICE_NOTIFY = UUID.fromString("684a4960-b6a6-11ef-be87-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_NOTIFY_SOURCE = UUID.fromString("684a4961-b6a6-11ef-be87-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_NOTIFY_TITLE = UUID.fromString("684a4962-b6a6-11ef-be87-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_NOTIFY_BODY = UUID.fromString("684a4963-b6a6-11ef-be87-0800200c9a66");
 }
