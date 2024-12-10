@@ -66,7 +66,8 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public int[] getSupportedDeviceSpecificSettings(GBDevice device) {
         return new int[] {
-                R.xml.devicesettings_time_sync
+                R.xml.devicesettings_time_sync,
+                R.xml.devicesettings_prefix_notification_with_app
         };
     }
 
