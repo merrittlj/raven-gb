@@ -32,8 +32,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     public RavenSupport() {
         super(LOG);
         addSupportedService(GattService.UUID_SERVICE_CURRENT_TIME);
-        AlertNotificationProfile<RavenSupport> alertNotificationProfile = new AlertNotificationProfile<>(this);
-        addSupportedProfile(alertNotificationProfile);
+        addSupportedService(RavenConstants.UUID_SERVICE_NOTIFY);
     }
 
     @Override
@@ -101,10 +100,11 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         title = truncate(title, titleCut);
         body = truncate(body, NotifyBodyCut);
 
-        TransactionBuilder builder = new TransactionBuilder("setTime");
+        TransactionBuilder builder = new TransactionBuilder("setNotify");
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SOURCE), source.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TITLE), title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_BODY), body.getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SEND), new byte[]{1});
         LOG.info(source);
         LOG.info(title);
         LOG.info(body);
