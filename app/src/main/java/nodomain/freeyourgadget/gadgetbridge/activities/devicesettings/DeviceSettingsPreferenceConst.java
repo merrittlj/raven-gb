@@ -45,6 +45,7 @@ public class DeviceSettingsPreferenceConst {
 
     public static final String PREF_SCREEN_NIGHT_MODE = "pref_screen_night_mode";
     public static final String PREF_SCREEN_SLEEP_MODE = "pref_screen_sleep_mode";
+    public static final String PREF_DARK_MODE = "pref_screen_dark_mode";
     public static final String PREF_SCREEN_LIFT_WRIST = "pref_screen_lift_wrist";
     public static final String PREF_SCREEN_PASSWORD = "pref_screen_password";
     public static final String PREF_SCREEN_ALWAYS_ON_DISPLAY = "pref_screen_always_on_display";

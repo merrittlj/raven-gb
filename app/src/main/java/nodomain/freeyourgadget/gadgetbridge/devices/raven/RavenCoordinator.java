@@ -59,14 +59,18 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
-    public boolean supportsWeather() {
-        return false;
+    public boolean supportsMusicInfo() {
+        return true;
+    }
+
+    public boolean supportsNavigation() {
+        return true;
     }
 
     @Override
     public int[] getSupportedDeviceSpecificSettings(GBDevice device) {
         return new int[] {
-                R.xml.devicesettings_time_sync,
+                R.xml.devicesettings_darkmode,
                 R.xml.devicesettings_prefix_notification_with_app
         };
     }

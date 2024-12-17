@@ -1,18 +1,22 @@
 package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 
 
-import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_TIME_SYNC;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.GregorianCalendar;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst;
+import nodomain.freeyourgadget.gadgetbridge.devices.pinetime.PineTimeJFConstants;
 import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenConstants;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.model.MusicSpec;
+import nodomain.freeyourgadget.gadgetbridge.model.NavigationInfoSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationType;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.AbstractBTLEDeviceSupport;
@@ -21,18 +25,20 @@ import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattService;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.SetDeviceStateAction;
-import nodomain.freeyourgadget.gadgetbridge.service.btle.profiles.alertnotification.AlertNotificationProfile;
 
 public class RavenSupport extends AbstractBTLEDeviceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(RavenSupport.class);
     private final int NotifySourceCut = 15;
-    private final int NotifyTitleCut = 35;
-    private final int NotifyBodyCut = 50;
+    private final int NotifyTitleCut = 15;
+    private final int NotifyBodyCut = 90;
 
     public RavenSupport() {
         super(LOG);
         addSupportedService(GattService.UUID_SERVICE_CURRENT_TIME);
         addSupportedService(RavenConstants.UUID_SERVICE_NOTIFY);
+        addSupportedService(RavenConstants.UUID_SERVICE_PREF);
+        addSupportedService(RavenConstants.UUID_SERVICE_NAV);
+        addSupportedService(RavenConstants.UUID_SERVICE_MUSIC);
     }
 
     @Override
@@ -45,9 +51,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             getDevice().setFirmwareVersion2("N/A");
         }
 
-        if (GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(PREF_TIME_SYNC, true)) {
-            onSetTime();
-        }
+        onSetTime();  // Time sync
+        boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[scheme ? 1 : 0]);
+
         builder.add(new SetDeviceStateAction(getDevice(), GBDevice.State.INITIALIZED, getContext()));
         LOG.info("Initialization Done");
 
@@ -105,10 +112,117 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TITLE), title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_BODY), body.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SEND), new byte[]{1});
-        LOG.info(source);
-        LOG.info(title);
-        LOG.info(body);
         builder.queue(getQueue());
+    }
+
+    @Override
+    public void onSetNavigationInfo(NavigationInfoSpec navigationInfoSpec) {
+        // spec.instruction(String): ex - "Use the right lane to take the US-101 N ramp to San Francisco
+        // spec.distanceToTurn(String): ex - "0.2 mi"
+        // spec.ETA(String): ex - "5 min"
+        // spec.nextAction(int): ex - ACTION_TURN_LEFT - "next" is confusing, this is the action to be displayed
+        TransactionBuilder builder = new TransactionBuilder("setNav");
+        if (navigationInfoSpec.instruction == null) {
+            navigationInfoSpec.instruction = "";
+        }
+        if (navigationInfoSpec.distanceToTurn == null) {
+            navigationInfoSpec.distanceToTurn = "";
+        }
+        if (navigationInfoSpec.ETA == null) {
+            navigationInfoSpec.ETA = "";
+        }
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_INSTRUCTION), navigationInfoSpec.instruction.getBytes(StandardCharsets.UTF_8));
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_DISTANCE), navigationInfoSpec.distanceToTurn.getBytes(StandardCharsets.UTF_8));
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ETA), navigationInfoSpec.ETA.getBytes(StandardCharsets.UTF_8));
+
+        String action;
+        // This is PineTime's protocol, but it is a solid implementation
+        switch (navigationInfoSpec.nextAction) {
+            case NavigationInfoSpec.ACTION_CONTINUE:
+                action = "continue";
+                break;
+            case NavigationInfoSpec.ACTION_TURN_LEFT:
+                action = "turn-left";
+                break;
+            case NavigationInfoSpec.ACTION_TURN_LEFT_SLIGHTLY:
+                action = "turn-slight-left";
+                break;
+            case NavigationInfoSpec.ACTION_TURN_LEFT_SHARPLY:
+                action = "turn-sharp-left";
+                break;
+            case NavigationInfoSpec.ACTION_TURN_RIGHT:
+                action = "turn-right";
+                break;
+            case NavigationInfoSpec.ACTION_TURN_RIGHT_SLIGHTLY:
+                action = "turn-slight-right";
+                break;
+            case NavigationInfoSpec.ACTION_TURN_RIGHT_SHARPLY:
+                action = "turn-sharp-right";
+                break;
+            case NavigationInfoSpec.ACTION_KEEP_LEFT:
+                action = "continue-left";
+                break;
+            case NavigationInfoSpec.ACTION_KEEP_RIGHT:
+                action = "continue-right";
+                break;
+            case NavigationInfoSpec.ACTION_UTURN_LEFT:
+            case NavigationInfoSpec.ACTION_UTURN_RIGHT:
+                action = "uturn";
+                break;
+            case NavigationInfoSpec.ACTION_ROUNDABOUT_RIGHT:
+                action = "roundabout-right";
+                break;
+            case NavigationInfoSpec.ACTION_ROUNDABOUT_LEFT:
+                action = "roundabout-left";
+                break;
+            case NavigationInfoSpec.ACTION_OFFROUTE:
+                action = "close";
+                break;
+            default:
+                action = "invalid";
+                break;
+        }
+
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ACTION), action.getBytes(StandardCharsets.UTF_8));
+        builder.queue(getQueue());
+    }
+
+    @Override
+    public void onSetMusicInfo(MusicSpec musicSpec) {
+        // Raven only uses artist, song name, and album
+        try {
+            TransactionBuilder builder = performInitialized("setMusic");
+
+            if (musicSpec.artist == null) {
+                musicSpec.artist = "";
+            }
+            if (musicSpec.track == null) {
+                musicSpec.track = "";
+            }
+            if (musicSpec.album == null) {
+                musicSpec.album = "";
+            }
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ARTIST), musicSpec.artist.getBytes());
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRACK), musicSpec.track.getBytes());
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM), musicSpec.album.getBytes());
+
+            builder.queue(getQueue());
+        } catch (Exception e) {
+            LOG.error("Error sending music info", e);
+        }
+    }
+
+    @Override
+    public void onSendConfiguration(final String config) {
+        switch (config) {
+            case PREF_DARK_MODE:
+                TransactionBuilder builder = new TransactionBuilder("setPref");
+                boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[scheme ? 1 : 0]);
+                return;
+        }
+
+        LOG.warn("Unknown config changed: {}", config);
     }
 
     @Override

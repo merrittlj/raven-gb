@@ -3540,4 +3540,6 @@
     <string name="permission_query_all_packages_title">Query all packages</string>
     <string name="permission_query_all_packages_summary">Reading names and icons of all installed apps</string>
     <string name="devicetype_raven">Raven Smartwatch</string>
+    <string name="pref_darkmode">Dark Mode</string>
+    <string name="pref_dark_mode">Dark Mode</string>
 </resources>
