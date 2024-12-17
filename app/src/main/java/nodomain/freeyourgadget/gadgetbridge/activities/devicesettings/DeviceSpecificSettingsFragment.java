@@ -699,6 +699,8 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_SLEEP_MODE_SLEEP_SCREEN);
         addPreferenceHandlerFor(PREF_SLEEP_MODE_SMART_ENABLE);
 
+        addPreferenceHandlerFor(PREF_DARK_MODE);
+
         addPreferenceHandlerFor(PREF_ACTIVE_NOISE_CANCELLING_TOGGLE);
         addPreferenceHandlerFor(PREF_NOISE_CONTROL_SELECTOR);
         addPreferenceHandlerFor(PREF_WEAR_SENSOR_TOGGLE);

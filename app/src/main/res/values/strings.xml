@@ -4324,4 +4324,6 @@
     <string name="filter_charts">Filter charts</string>
     <string name="recovery_heart_rate">Recovery Heart rate</string>
     <string name="devicetype_raven">Raven Smartwatch</string>
+    <string name="pref_darkmode">Dark Mode</string>
+    <string name="pref_dark_mode">Dark Mode</string>
 </resources>
