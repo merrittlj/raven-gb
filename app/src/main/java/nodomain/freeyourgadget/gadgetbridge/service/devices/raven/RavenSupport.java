@@ -32,6 +32,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     private final int NotifyTitleCut = 15;
     private final int NotifyBodyCut = 90;
 
+    String lastArtist;
+    String lastTrack;
+    String lastAlbum;
+
     public RavenSupport() {
         super(LOG);
         addSupportedService(GattService.UUID_SERVICE_CURRENT_TIME);
@@ -179,7 +183,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 action = "close";
                 break;
             default:
-                action = "invalid";
+                action = "flag";
                 break;
         }
 
@@ -202,9 +206,20 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             if (musicSpec.album == null) {
                 musicSpec.album = "";
             }
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ARTIST), musicSpec.artist.getBytes());
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRACK), musicSpec.track.getBytes());
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM), musicSpec.album.getBytes());
+
+            // Track last artist, track, and album to avoid duplicated messages, as Raven does not track other stats no need to update
+            if (!musicSpec.artist.equals(lastArtist)) {
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ARTIST), musicSpec.artist.getBytes());
+                lastArtist = musicSpec.artist;
+            }
+            if (!musicSpec.track.equals(lastTrack)) {
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRACK), musicSpec.track.getBytes());
+                lastTrack = musicSpec.track;
+            }
+            if (!musicSpec.album.equals(lastAlbum)) {
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM), musicSpec.album.getBytes());
+                lastAlbum = musicSpec.album;
+            }
 
             builder.queue(getQueue());
         } catch (Exception e) {
