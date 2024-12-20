@@ -44,6 +44,7 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
 
     @Override
     protected Pattern getSupportedDeviceName() {
+        // TODO: change .* to digit wildcard
         return Pattern.compile("Raven V.*\\..*");
     }
 
@@ -71,7 +72,9 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     public int[] getSupportedDeviceSpecificSettings(GBDevice device) {
         return new int[] {
                 R.xml.devicesettings_darkmode,
-                R.xml.devicesettings_prefix_notification_with_app
+                R.xml.devicesettings_prefix_notification_with_app,
+                R.xml.devicesettings_sync_calendar,
+                R.xml.devicesettings_alarm_sync
         };
     }
 

@@ -603,6 +603,8 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_BATTERY_POLLING_INTERVAL);
         addPreferenceHandlerFor(PREF_TIME_SYNC);
 
+        addPreferenceHandlerFor(PREF_ALARM_SYNC);
+
         addPreferenceHandlerFor(PREF_BLUETOOTH_CALLS_ENABLED);
         addPreferenceHandlerFor(PREF_DISPLAY_CALLER);
         addPreferenceHandlerFor(PREF_NOTIFICATION_DELAY_CALLS);

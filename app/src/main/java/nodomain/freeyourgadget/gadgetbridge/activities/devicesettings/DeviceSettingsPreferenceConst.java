@@ -85,6 +85,7 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_SYNC_CALENDAR = "sync_calendar";
     public static final String PREF_CALENDAR_LOOKAHEAD_DAYS = "calendar_lookahead_days";
     public static final String PREF_TIME_SYNC = "time_sync";
+    public static final String PREF_ALARM_SYNC = "alarm_sync";
     public static final String PREF_USE_CUSTOM_DEVICEICON = "use_custom_deviceicon";
     public static final String PREF_BUTTON_1_FUNCTION_SHORT = "button_1_function_short";
     public static final String PREF_BUTTON_2_FUNCTION_SHORT = "button_2_function_short";

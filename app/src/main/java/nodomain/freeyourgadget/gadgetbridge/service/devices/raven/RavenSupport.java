@@ -1,20 +1,27 @@
 package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 
 
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_ALARM_SYNC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
+
+import androidx.core.text.HtmlCompat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst;
-import nodomain.freeyourgadget.gadgetbridge.devices.pinetime.PineTimeJFConstants;
 import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenConstants;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
+import nodomain.freeyourgadget.gadgetbridge.model.CalendarEventSpec;
+import nodomain.freeyourgadget.gadgetbridge.model.CallSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.MusicSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NavigationInfoSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
@@ -32,6 +39,12 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     private final int NotifyTitleCut = 15;
     private final int NotifyBodyCut = 90;
 
+    private final int EVENT_TYPE_ALARM = 0;
+    private final int EVENT_TYPE_CALENDAR = 1;
+
+    private final int SCHEME_LIGHT = 0;
+    private final int SCHEME_DARK = 1;
+
     String lastArtist;
     String lastTrack;
     String lastAlbum;
@@ -43,6 +56,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         addSupportedService(RavenConstants.UUID_SERVICE_PREF);
         addSupportedService(RavenConstants.UUID_SERVICE_NAV);
         addSupportedService(RavenConstants.UUID_SERVICE_MUSIC);
+        addSupportedService(RavenConstants.UUID_SERVICE_EVENT);
     }
 
     @Override
@@ -57,7 +71,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         onSetTime();  // Time sync
         boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[scheme ? 1 : 0]);
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
 
         builder.add(new SetDeviceStateAction(getDevice(), GBDevice.State.INITIALIZED, getContext()));
         LOG.info("Initialization Done");
@@ -115,8 +129,13 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SOURCE), source.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TITLE), title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_BODY), body.getBytes());
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SEND), new byte[]{1});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TRIGGER), new byte[]{1});
         builder.queue(getQueue());
+    }
+
+    @Override
+    public void onDeleteNotification(int id) {
+        // TODO: is this necessary?
     }
 
     @Override
@@ -228,16 +247,92 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
+    public void onSetCallState(CallSpec callSpec) {
+        // Only notify incoming calls, just send through a notification
+        if (callSpec.command != CallSpec.CALL_INCOMING) return;
+        NotificationSpec callNotif = new NotificationSpec();
+        callNotif.sourceName = callSpec.number;  // TODO: might be null
+        callNotif.title = callSpec.sourceName;
+        // TODO: If sourceName & name are redundant, change this to something like "you have an incoming call!"
+        callNotif.body = callSpec.name;
+        onNotification(callNotif);
+    }
+
+    @Override
+    public void onSetAlarms(ArrayList<? extends Alarm> alarms) {
+        // TODO: Do we get a notification or function for when an alarm goes off?
+        if (!getDevicePrefs().getBoolean(PREF_ALARM_SYNC, false)) {
+            LOG.info("Ignoring add alarms {}, sync is disabled", alarms);
+            return;
+        }
+
+        TransactionBuilder builder = new TransactionBuilder("setEventAlarm");
+        for (Alarm a : alarms) {
+            if (a.getUnused() || !a.getEnabled()) continue;
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_ALARM});
+            // TODO: where id?
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{0});
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), a.getTitle().getBytes());
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), a.getDescription().getBytes());
+            // TODO: this needs to be minutes too!! try and use event timestamp format
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) a.getHour()});
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) a.getRepetition()});
+
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
+        }
+        builder.queue(getQueue());
+    }
+
+    @Override
+    public void onAddCalendarEvent(CalendarEventSpec calendarEventSpec) {
+        if (!getDevicePrefs().getBoolean(PREF_SYNC_CALENDAR, false)) {
+            LOG.info("Ignoring add calendar event {}, sync is disabled", calendarEventSpec.id);
+            return;
+        }
+
+        String description = calendarEventSpec.description;
+        if (description != null) {
+            // remove any HTML formatting
+            if (description.startsWith("<html"))
+                description = androidx.core.text.HtmlCompat.fromHtml(description, HtmlCompat.FROM_HTML_MODE_LEGACY).toString();
+            // Replace "-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-" lines from Google meet
+            description = ("\n"+description+"\n").replaceAll("\n-[:~-]*\n","");
+            // Replace ____________________ from MicrosoftTeams
+            description = description.replaceAll("__________+", "");
+            // replace double newlines and trim beginning and end
+            description = description.replaceAll("\n\\s*\n","\n").trim();
+        }
+
+        TransactionBuilder builder = new TransactionBuilder("setEventCalendar");
+
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_CALENDAR});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{(byte) calendarEventSpec.id});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), calendarEventSpec.title.getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), description.getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) calendarEventSpec.timestamp});
+        // TODO: does durationInSeconds encompass allDay?
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) calendarEventSpec.durationInSeconds});
+
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
+        builder.queue(getQueue());
+    }
+
+    @Override
+    public void onDeleteCalendarEvent(byte type, long id) {
+        // TODO: is this necessary?
+    }
+
+    @Override
     public void onSendConfiguration(final String config) {
         switch (config) {
             case PREF_DARK_MODE:
                 TransactionBuilder builder = new TransactionBuilder("setPref");
                 boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[scheme ? 1 : 0]);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
                 return;
         }
 
-        LOG.warn("Unknown config changed: {}", config);
+        LOG.warn("Unsupported config sender changed: {}", config);
     }
 
     @Override
