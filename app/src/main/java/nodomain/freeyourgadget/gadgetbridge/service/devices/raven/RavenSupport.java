@@ -145,11 +145,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onDeleteNotification(int id) {
-        // TODO: is this necessary?
-    }
-
-    @Override
     public void onSetNavigationInfo(NavigationInfoSpec navigationInfoSpec) {
         // spec.instruction(String): ex - "Use the right lane to take the US-101 N ramp to San Francisco
         // spec.distanceToTurn(String): ex - "0.2 mi"
@@ -223,7 +218,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onSetMusicInfo(MusicSpec musicSpec) {
-        // Raven only uses artist, song name, and album
+        // Raven only uses artist, song name, album, and album art
         try {
             TransactionBuilder builder = performInitialized("setMusic");
 
@@ -276,6 +271,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
                 Toast toast = new Toast(getContext());
                 ImageView view = new ImageView(getContext());
+                // set resource to gscaleBitmap here
                 view.setImageResource(R.drawable.ic_device_banglejs);
                 toast.setView(view);
                 toast.show();
@@ -296,16 +292,15 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         // Only notify incoming calls, just send through a notification
         if (callSpec.command != CallSpec.CALL_INCOMING) return;
         NotificationSpec callNotif = new NotificationSpec();
-        callNotif.sourceName = callSpec.number;  // TODO: might be null
+        callNotif.sourceName = callSpec.number;
         callNotif.title = callSpec.sourceName;
-        // TODO: If sourceName & name are redundant, change this to something like "you have an incoming call!"
+        // TODO: [tests] If sourceName & name are redundant, change this to something like "you have an incoming call!"
         callNotif.body = callSpec.name;
         onNotification(callNotif);
     }
 
     @Override
     public void onSetAlarms(ArrayList<? extends Alarm> alarms) {
-        // TODO: Do we get a notification or function for when an alarm goes off?
         if (!getDevicePrefs().getBoolean(PREF_ALARM_SYNC, false)) {
             LOG.info("Ignoring add alarms {}, sync is disabled", alarms);
             return;
@@ -315,11 +310,11 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         for (Alarm a : alarms) {
             if (a.getUnused() || !a.getEnabled()) continue;
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_ALARM});
-            // TODO: where id?
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{0});
+            // Alarms do not have IDs within the spec
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{-1});
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), a.getTitle().getBytes());
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), a.getDescription().getBytes());
-            // TODO: this needs to be minutes too!! try and use event timestamp format
+            // TODO: [tests] this needs to be minutes too!! try and use event timestamp format
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) a.getHour()});
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) a.getRepetition()});
 
@@ -351,12 +346,12 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         TransactionBuilder builder = new TransactionBuilder("setEventCalendar");
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_CALENDAR});
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{(byte) calendarEventSpec.id});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{(byte) calendarEventSpec.id});  // TODO: might this lose data when converting long -> byte?
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), calendarEventSpec.title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), description.getBytes());
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) calendarEventSpec.timestamp});
-        // TODO: does durationInSeconds encompass allDay?
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) calendarEventSpec.durationInSeconds});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) calendarEventSpec.timestamp});  // TODO: might this lose data?
+        // TODO: [tests] does durationInSeconds encompass allDay?
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) calendarEventSpec.durationInSeconds});  // TODO: might this lose data?
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
         builder.queue(getQueue());
