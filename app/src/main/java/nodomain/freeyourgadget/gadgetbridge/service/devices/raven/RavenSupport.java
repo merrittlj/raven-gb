@@ -5,11 +5,20 @@ import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.Dev
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
 
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
+import android.widget.ImageView;
+import android.widget.Toast;
+
 import androidx.core.text.HtmlCompat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
@@ -17,8 +26,8 @@ import java.util.GregorianCalendar;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst;
-import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenConstants;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenConstants;
 import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
 import nodomain.freeyourgadget.gadgetbridge.model.CalendarEventSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.CallSpec;
@@ -32,6 +41,7 @@ import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattService;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.SetDeviceStateAction;
+import nodomain.freeyourgadget.gadgetbridge.util.GB;
 
 public class RavenSupport extends AbstractBTLEDeviceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(RavenSupport.class);
@@ -48,6 +58,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     String lastArtist;
     String lastTrack;
     String lastAlbum;
+    Bitmap lastAlbumArt;
 
     public RavenSupport() {
         super(LOG);
@@ -225,6 +236,9 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             if (musicSpec.album == null) {
                 musicSpec.album = "";
             }
+            if (musicSpec.albumArt == null) {
+                musicSpec.albumArt = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
+            }
 
             // Track last artist, track, and album to avoid duplicated messages, as Raven does not track other stats no need to update
             if (!musicSpec.artist.equals(lastArtist)) {
@@ -239,6 +253,37 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM), musicSpec.album.getBytes());
                 lastAlbum = musicSpec.album;
             }
+            if (!musicSpec.albumArt.equals(lastAlbumArt)) {
+                // Resize image
+                Bitmap resizedBitmap = Bitmap.createScaledBitmap(musicSpec.albumArt, 200, 200, false);
+
+                // Convert resized bitmap to monochrome
+                Bitmap gscaleBitmap = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(gscaleBitmap);
+                Paint paint = new Paint();
+                ColorMatrix cm = new ColorMatrix();
+                cm.setSaturation(0);
+                paint.setColorFilter(new ColorMatrixColorFilter(cm));
+                canvas.drawBitmap(resizedBitmap, 0, 0, paint);
+
+                // Convert monochrome bitmap to byte buffer
+                ByteBuffer buffer = ByteBuffer.allocate(gscaleBitmap.getRowBytes() * gscaleBitmap.getHeight());
+                gscaleBitmap.copyPixelsToBuffer(buffer);
+                byte[] bytes = buffer.array();
+                for (int i = 0; i < bytes.length; ++i) {
+                    bytes[i] = (byte) (bytes[i] & 0xff);
+                }
+
+                Toast toast = new Toast(getContext());
+                ImageView view = new ImageView(getContext());
+                view.setImageResource(R.drawable.ic_device_banglejs);
+                toast.setView(view);
+                toast.show();
+
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), bytes);
+                lastAlbumArt = musicSpec.albumArt;
+            }
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{1});
 
             builder.queue(getQueue());
         } catch (Exception e) {
@@ -315,11 +360,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
         builder.queue(getQueue());
-    }
-
-    @Override
-    public void onDeleteCalendarEvent(byte type, long id) {
-        // TODO: is this necessary?
     }
 
     @Override
