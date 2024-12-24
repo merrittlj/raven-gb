@@ -126,6 +126,7 @@ import nodomain.freeyourgadget.gadgetbridge.externalevents.gps.GBLocationProvide
 import nodomain.freeyourgadget.gadgetbridge.externalevents.gps.GBLocationService;
 import nodomain.freeyourgadget.gadgetbridge.externalevents.sleepasandroid.SleepAsAndroidAction;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
+import nodomain.freeyourgadget.gadgetbridge.model.ActivityKind;
 import nodomain.freeyourgadget.gadgetbridge.model.ActivitySample;
 import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
 import nodomain.freeyourgadget.gadgetbridge.model.BatteryState;
@@ -351,7 +352,7 @@ public class BangleJSDeviceSupport extends AbstractBTLEDeviceSupport {
         Prefs devicePrefs = new Prefs(GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()));
         allowHighMTU = devicePrefs.getBoolean(PREF_ALLOW_HIGH_MTU, true);
 
-        if (allowHighMTU && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (allowHighMTU) {
             builder.requestMtu(131);
         }
         // No need to clear active line with Ctrl-C now - firmwares in 2023 auto-clear on connect
@@ -563,12 +564,12 @@ public class BangleJSDeviceSupport extends AbstractBTLEDeviceSupport {
             } break;
             case "music": {
                 GBDeviceEventMusicControl deviceEventMusicControl = new GBDeviceEventMusicControl();
-                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.valueOf(json.getString("n").toUpperCase());
+                deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.valueOf(json.getString("n").toUpperCase(Locale.US));
                 evaluateGBDeviceEvent(deviceEventMusicControl);
             } break;
             case "call": {
                 GBDeviceEventCallControl deviceEventCallControl = new GBDeviceEventCallControl();
-                deviceEventCallControl.event = GBDeviceEventCallControl.Event.valueOf(json.getString("n").toUpperCase());
+                deviceEventCallControl.event = GBDeviceEventCallControl.Event.valueOf(json.getString("n").toUpperCase(Locale.US));
                 evaluateGBDeviceEvent(deviceEventCallControl);
             } break;
             case "status":
@@ -761,7 +762,7 @@ public class BangleJSDeviceSupport extends AbstractBTLEDeviceSupport {
      */
     private void handleNotificationControl(JSONObject json) throws JSONException {
 
-        String response = json.getString("n").toUpperCase();
+        String response = json.getString("n").toUpperCase(Locale.US);
         LOG.debug("Notification response: " + response);
 
         // Wake the Android device if the setting is toggled on by user.
@@ -821,25 +822,21 @@ public class BangleJSDeviceSupport extends AbstractBTLEDeviceSupport {
         int steps = json.optInt("stp", 0);
         int intensity = json.optInt("mov", ActivitySample.NOT_MEASURED);
         boolean realtime = json.optInt("rt", 0) == 1;
-        int activity = BangleJSSampleProvider.TYPE_ACTIVITY;
-        /*if (json.has("act")) {
-            String actName = "TYPE_" + json.getString("act").toUpperCase();
+        ActivityKind activity = ActivityKind.ACTIVITY;
+        if (json.has("act")) {
             try {
-                Field f = ActivityKind.class.getField(actName);
-                try {
-                    activity = f.getInt(null);
-                } catch (IllegalAccessException e) {
-                    LOG.info("JSON activity '"+actName+"' not readable");
-                }
-            } catch (NoSuchFieldException e) {
-                LOG.info("JSON activity '"+actName+"' not found");
+                String actName = json.optString("act","").toUpperCase(Locale.US);
+                activity = ActivityKind.valueOf(actName);
+            } catch (final Exception e) {
+                LOG.warn("JSON activity not known", e);
+                activity = ActivityKind.UNKNOWN;
             }
-        }*/
+        }
         if(hrm>0) {
             sleepAsAndroidSender.onHrChanged(hrm, 0);
         }
         sample.setTimestamp(timestamp);
-        sample.setRawKind(activity);
+        sample.setRawKind(activity.getCode());
         sample.setHeartRate(hrm);
         sample.setSteps(steps);
         sample.setRawIntensity(intensity);
@@ -891,7 +888,7 @@ public class BangleJSDeviceSupport extends AbstractBTLEDeviceSupport {
 
         int method = Request.Method.GET;
         if (json.has("method")) {
-            String m = json.getString("method").toLowerCase();
+            String m = json.getString("method").toLowerCase(Locale.US);
             if (m.equals("get")) method = Request.Method.GET;
             else if (m.equals("post")) method = Request.Method.POST;
             else if (m.equals("head")) method = Request.Method.HEAD;
@@ -1582,7 +1579,7 @@ public class BangleJSDeviceSupport extends AbstractBTLEDeviceSupport {
                 Field[] fields = callSpec.getClass().getDeclaredFields();
                 for (Field field : fields)
                     if (field.getName().startsWith("CALL_") && field.getInt(callSpec) == callSpec.command)
-                        cmdName = field.getName().substring(5).toLowerCase();
+                        cmdName = field.getName().substring(5).toLowerCase(Locale.US);
             } catch (IllegalAccessException e) {}
             o.put("cmd", cmdName);
             o.put("name", renderUnicodeAsImage(callSpec.name));

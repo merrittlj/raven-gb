@@ -336,6 +336,10 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_NOTHING_EAR1_INEAR = "pref_nothing_inear_detection";
     public static final String PREF_NOTHING_EAR1_AUDIOMODE = "pref_nothing_audiomode";
 
+
+    public static final String PREF_HUAWEI_FREEBUDS_INEAR = "pref_freebuds_inear_detection";
+    public static final String PREF_HUAWEI_FREEBUDS_AUDIOMODE = "pref_freebuds_audiomode";
+
     public static final String PREF_GALAXY_BUDS_AMBIENT_MODE = "pref_galaxy_buds_ambient_mode";
     public static final String PREF_GALAXY_BUDS_AMBIENT_VOICE_FOCUS = "pref_galaxy_buds_ambient_voice_focus";
     public static final String PREF_GALAXY_BUDS_AMBIENT_VOLUME = "pref_galaxy_buds_ambient_volume";
@@ -587,4 +591,14 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREFS_KEY_DEVICE_BLE_API_DEVICE_READ_WRITE = "prefs_device_ble_api_characteristic_read_write";
     public static final String PREFS_KEY_DEVICE_BLE_API_DEVICE_NOTIFY = "prefs_device_ble_api_characteristic_notify";
     public static final String PREFS_KEY_DEVICE_BLE_API_PACKAGE = "prefs_device_ble_api_package";
+
+    public static final String PREF_BATTERY_DISCHARGE_INTERVAL1_WATT = "battery_discharge_interval1_watt";
+    public static final String PREF_BATTERY_DISCHARGE_INTERVAL2_WATT = "battery_discharge_interval2_watt";
+    public static final String PREF_BATTERY_DISCHARGE_INTERVAL3_WATT = "battery_discharge_interval3_watt";
+    public static final String PREF_BATTERY_DISCHARGE_INTERVAL4_WATT = "battery_discharge_interval4_watt";
+    public static final String PREF_BATTERY_DISCHARGE_INTERVAL5_WATT = "battery_discharge_interval5_watt";
+    public static final String PREF_BATTERY_DISCHARGE_INTERVALS_SET = "battery_discharge_intervals_set";
+    public static final String PREF_BATTERY_DISCHARGE_MANAUAL = "battery_discharge_manual";
+    public static final String PREF_BATTERY_MINIMUM_CHARGE = "battery_minimum_charge";
+    public static final String PREF_BATTERY_ALLOW_PASS_THOUGH = "battery_allow_pass_though";
 }

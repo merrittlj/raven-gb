@@ -4428,6 +4428,7 @@
         <item>@string/distance</item>
         <item>@string/active_time</item>
         <item>@string/menuitem_sleep</item>
+        <item>@string/sleep_score</item>
         <item>@string/body_energy</item>
         <item>@string/menuitem_stress_simple</item>
         <item>@string/menuitem_stress_segmented</item>
@@ -4447,6 +4448,7 @@
         <item>distance</item>
         <item>activetime</item>
         <item>sleep</item>
+        <item>sleepscore</item>
         <item>bodyenergy</item>
         <item>stress_simple</item>
         <item>stress_segmented</item>
@@ -4472,5 +4474,17 @@
         <item>vo2max</item>
         <item>calories_active</item>
         <item>calories_segmented</item>
+    </string-array>
+
+    <string-array name="huawei_freebuds_audio_mode_names">
+        <item>@string/prefs_active_noise_cancelling</item>
+        <item>@string/prefs_active_noise_cancelling_transparency</item>
+        <item>@string/off</item>
+    </string-array>
+
+    <string-array name="huawei_freebuds_audio_mode_values">
+        <item>anc</item>
+        <item>transparency</item>
+        <item>off</item>
     </string-array>
 </resources>

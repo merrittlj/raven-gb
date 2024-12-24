@@ -173,6 +173,11 @@ public abstract class HuaweiLECoordinator extends AbstractBLEDeviceCoordinator i
     }
 
     @Override
+    public boolean supportsActiveCalories() {
+        return true;
+    }
+
+    @Override
     public boolean supportsActivityTracking() {
         return true;
     }
@@ -203,13 +208,18 @@ public abstract class HuaweiLECoordinator extends AbstractBLEDeviceCoordinator i
     }
 
     @Override
+    public boolean supportsContinuousTemperature() {
+        return huaweiCoordinator.supportsTemperature();
+    }
+
+    @Override
     public InstallHandler findInstallHandler(Uri uri, Context context) {
         return huaweiCoordinator.getInstallHandler(uri, context);
     }
 
     @Override
     public ActivitySummaryParser getActivitySummaryParser(final GBDevice device, final Context context) {
-        return new HuaweiWorkoutGbParser(device);
+        return new HuaweiWorkoutGbParser(device, context);
     }
 
     @Override

@@ -33,6 +33,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.asteroidos.AsteroidOSDeviceC
 import nodomain.freeyourgadget.gadgetbridge.devices.bandwpseries.BandWPSeriesDeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.banglejs.BangleJSCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.binary_sensor.coordinator.BinarySensorCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.casio.ecbs100.CasioECBS100DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.casio.gb6900.CasioGB6900DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.casio.gbx100.CasioGBX100DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.casio.gwb5600.CasioGMWB5000DeviceCoordinator;
@@ -42,6 +43,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.cmfwatchpro.CmfWatchProCoord
 import nodomain.freeyourgadget.gadgetbridge.devices.colmi.ColmiR02Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.colmi.ColmiR03Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.colmi.ColmiR06Coordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.colmi.ColmiR09Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.colmi.ColmiR10Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.cycling_sensor.coordinator.CyclingSensorCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.divoom.PixooCoordinator;
@@ -65,9 +67,11 @@ import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminF
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix6SProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix6SSapphireCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix6SapphireCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix6XProSolarCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix7Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix7ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix7SCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix7XCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.fenix.GarminFenix8Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.forerunner.GarminForerunner165Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.forerunner.GarminForerunner235Coordinator;
@@ -96,10 +100,10 @@ import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.swim.GarminSw
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenu2Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenu2PlusCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenu2SCoordinator;
-import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenuSq2Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenu3Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenu3SCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenuCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenuSq2Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.venu.GarminVenuSqCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.vivoactive.GarminVivoActive3Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.garmin.watches.vivoactive.GarminVivoActive4Coordinator;
@@ -170,6 +174,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huami.miband5.MiBand5Coordin
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.miband6.MiBand6Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.miband7.MiBand7Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huami.zeppe.ZeppECoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.huawei.freebuds5i.HuaweiFreebuds5iCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honorband3.HonorBand3Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honorband4.HonorBand4Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honorband5.HonorBand5Coordinator;
@@ -178,6 +183,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honorband7.HonorBand7
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honormagicwatch2.HonorMagicWatch2Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honorwatchgs3.HonorWatchGS3Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.honorwatchgspro.HonorWatchGSProCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiband2pro.HuaweiBand2ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiband3pro.HuaweiBand3ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiband4pro.HuaweiBand4ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiband6.HuaweiBand6Coordinator;
@@ -202,8 +208,8 @@ import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiwatchgtcyber.Hu
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiwatchgtrunner.HuaweiWatchGTRunnerCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.huawei.huaweiwatchultimate.HuaweiWatchUltimateCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.id115.ID115Coordinator;
-import nodomain.freeyourgadget.gadgetbridge.devices.itag.ITagCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.idasen.IdasenCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.itag.ITagCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.jyou.BFH16DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.jyou.TeclastH30.TeclastH30Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.jyou.y5.Y5Coordinator;
@@ -213,13 +219,14 @@ import nodomain.freeyourgadget.gadgetbridge.devices.lefun.VivitarHrBpMonitorActi
 import nodomain.freeyourgadget.gadgetbridge.devices.lenovo.watchxplus.WatchXPlusDeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.liveview.LiveviewCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.makibeshr3.MakibesHR3Coordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.marstek.MarstekB2500DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.miband.MiBandCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.mijia_lywsd.MijiaLywsd02Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.mijia_lywsd.MijiaLywsd03Coordinator;
-import nodomain.freeyourgadget.gadgetbridge.devices.mijia_lywsd.MijiaXmwsdj04Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.mijia_lywsd.MijiaMhoC303Coordinator;
-import nodomain.freeyourgadget.gadgetbridge.devices.miscale.MiSmartScaleCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.mijia_lywsd.MijiaXmwsdj04Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.miscale.MiCompositionScaleCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.miscale.MiSmartScaleCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.moondrop.MoondropSpaceTravelCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.no1f1.No1F1Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.nothing.CmfBudsPro2Coordinator;
@@ -276,6 +283,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.miband9.MiBand9Coordi
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.miband9pro.MiBand9ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.miwatch.MiWatchLiteCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.miwatchcolorsport.MiWatchColorSportCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmibuds5pro.RedmiBuds4ActiveCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmibuds5pro.RedmiBuds5ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmismartband2.RedmiSmartBand2Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmismartbandpro.RedmiSmartBandProCoordinator;
@@ -285,6 +293,7 @@ import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmiwatch3.RedmiWatc
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmiwatch3active.RedmiWatch3ActiveCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmiwatch4.RedmiWatch4Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmiwatch5active.RedmiWatch5ActiveCoordinator;
+import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.redmiwatch5lite.RedmiWatch5LiteCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.watchs1.XiaomiWatchS1Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.watchs1active.XiaomiWatchS1ActiveCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.xiaomi.watchs1pro.XiaomiWatchS1ProCoordinator;
@@ -350,6 +359,7 @@ public enum DeviceType {
     MIBAND9PRO(MiBand9ProCoordinator.class),
     MIWATCHLITE(MiWatchLiteCoordinator.class),
     MIWATCHCOLORSPORT(MiWatchColorSportCoordinator.class),
+    REDMIBUDS4ACTIVE(RedmiBuds4ActiveCoordinator.class),
     REDMIBUDS5PRO(RedmiBuds5ProCoordinator.class),
     REDMIWATCH3ACTIVE(RedmiWatch3ActiveCoordinator.class),
     REDMIWATCH3(RedmiWatch3Coordinator.class),
@@ -359,6 +369,7 @@ public enum DeviceType {
     REDMISMARTBANDPRO(RedmiSmartBandProCoordinator.class),
     REDMIWATCH4(RedmiWatch4Coordinator.class),
     REDMIWATCH5ACTIVE(RedmiWatch5ActiveCoordinator.class),
+    REDMIWATCH5LITE(RedmiWatch5LiteCoordinator.class),
     XIAOMI_WATCH_S1_ACTIVE(XiaomiWatchS1ActiveCoordinator.class),
     XIAOMI_WATCH_S1_PRO(XiaomiWatchS1ProCoordinator.class),
     XIAOMI_WATCH_S1(XiaomiWatchS1Coordinator.class),
@@ -400,6 +411,8 @@ public enum DeviceType {
     WATCHXPLUS(WatchXPlusDeviceCoordinator.class),
     ROIDMI(Roidmi1Coordinator.class),
     ROIDMI3(Roidmi3Coordinator.class),
+    CASIOECBS100(CasioECBS100DeviceCoordinator.class),
+
     CASIOGB6900(CasioGB6900DeviceCoordinator.class),
     CASIOGBX100(CasioGBX100DeviceCoordinator.class),
     CASIOGWB5600(CasioGWB5600DeviceCoordinator.class),
@@ -436,8 +449,10 @@ public enum DeviceType {
     GARMIN_FENIX_6_SAPPHIRE(GarminFenix6SapphireCoordinator.class),
     GARMIN_FENIX_6S_PRO(GarminFenix6SProCoordinator.class),
     GARMIN_FENIX_6S_SAPPHIRE(GarminFenix6SSapphireCoordinator.class),
+    GARMIN_FENIX_6X_PRO_SOLAR(GarminFenix6XProSolarCoordinator.class),
     GARMIN_FENIX_7(GarminFenix7Coordinator.class),
     GARMIN_FENIX_7S(GarminFenix7SCoordinator.class),
+    GARMIN_FENIX_7X(GarminFenix7XCoordinator.class),
     GARMIN_FENIX_7_PRO(GarminFenix7ProCoordinator.class),
     GARMIN_FENIX_8(GarminFenix8Coordinator.class),
     GARMIN_FORERUNNER_55(GarminForerunner55Coordinator.class),
@@ -522,6 +537,7 @@ public enum DeviceType {
     HUAWEIBANDAW70(HuaweiBandAw70Coordinator.class),
     HUAWEIBAND6(HuaweiBand6Coordinator.class),
     HUAWEIWATCHGT(HuaweiWatchGTCoordinator.class),
+    HUAWEIBAND2PRO(HuaweiBand2ProCoordinator.class),
     HUAWEIBAND3PRO(HuaweiBand3ProCoordinator.class),
     HUAWEIBAND4PRO(HuaweiBand4ProCoordinator.class),
     HUAWEIWATCHGT2(HuaweiWatchGT2Coordinator.class),
@@ -547,6 +563,7 @@ public enum DeviceType {
     HUAWEIWATCHULTIMATE(HuaweiWatchUltimateCoordinator.class),
     HUAWEIWATCH3(HuaweiWatch3Coordinator.class),
     HUAWEIWATCH4PRO(HuaweiWatch4ProCoordinator.class),
+    HUAWEI_FREEBUDS5I(HuaweiFreebuds5iCoordinator.class),
     VESC(VescCoordinator.class),
     BINARY_SENSOR(BinarySensorCoordinator.class),
     FLIPPER_ZERO(FlipperZeroCoordinator.class),
@@ -564,12 +581,14 @@ public enum DeviceType {
     COLMI_R02(ColmiR02Coordinator.class),
     COLMI_R03(ColmiR03Coordinator.class),
     COLMI_R06(ColmiR06Coordinator.class),
+    COLMI_R09(ColmiR09Coordinator.class),
     COLMI_R10(ColmiR10Coordinator.class),
     B_AND_W_P_SERIES(BandWPSeriesDeviceCoordinator.class),
     RAVEN_SW(RavenCoordinator.class),
     SCANNABLE(ScannableDeviceCoordinator.class),
     CYCLING_SENSOR(CyclingSensorCoordinator.class),
     BLE_GATT_CLIENT(BleGattClientCoordinator.class),
+    MARSTEK_B2500(MarstekB2500DeviceCoordinator.class),
     TEST(TestDeviceCoordinator.class);
 
     private DeviceCoordinator coordinator;

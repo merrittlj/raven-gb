@@ -44,6 +44,7 @@ import nodomain.freeyourgadget.gadgetbridge.model.ActivitySummaryParser;
 import nodomain.freeyourgadget.gadgetbridge.model.BodyEnergySample;
 import nodomain.freeyourgadget.gadgetbridge.model.HrvSummarySample;
 import nodomain.freeyourgadget.gadgetbridge.model.HrvValueSample;
+import nodomain.freeyourgadget.gadgetbridge.model.PaiSample;
 import nodomain.freeyourgadget.gadgetbridge.model.RespiratoryRateSample;
 import nodomain.freeyourgadget.gadgetbridge.model.RestingMetabolicRateSample;
 import nodomain.freeyourgadget.gadgetbridge.model.SleepScoreSample;
@@ -151,6 +152,11 @@ public abstract class GarminCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
+    public TimeSampleProvider<? extends PaiSample> getPaiSampleProvider(final GBDevice device, final DaoSession session) {
+        return new GarminPaiSampleProvider(device, session);
+    }
+
+    @Override
     public TimeSampleProvider<? extends RespiratoryRateSample> getRespiratoryRateSampleProvider(final GBDevice device, final DaoSession session) {
         return new GarminRespiratoryRateSampleProvider(device, session);
     }
@@ -178,9 +184,19 @@ public abstract class GarminCoordinator extends AbstractBLEDeviceCoordinator {
             deviceSpecificSettings.addRootScreen(R.xml.devicesettings_garmin_realtime_settings);
         }
 
+        if (supportsCalendarEvents()){
+            deviceSpecificSettings.addRootScreen(
+                    DeviceSpecificSettingsScreen.CALENDAR,
+                    R.xml.devicesettings_header_calendar,
+                    R.xml.devicesettings_sync_calendar
+            );
+        }
+
         final List<Integer> notifications = deviceSpecificSettings.addRootScreen(DeviceSpecificSettingsScreen.CALLS_AND_NOTIFICATIONS);
 
         notifications.add(R.xml.devicesettings_send_app_notifications);
+
+        notifications.add(R.xml.devicesettings_transliteration);
 
         if (getCannedRepliesSlotCount(device) > 0) {
             notifications.add(R.xml.devicesettings_canned_reply_16);
@@ -209,6 +225,11 @@ public abstract class GarminCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public DeviceSpecificSettingsCustomizer getDeviceSpecificSettingsCustomizer(GBDevice device) {
         return new GarminSettingsCustomizer();
+    }
+
+    @Override
+    public boolean supportsCalendarEvents() {
+        return true;
     }
 
     @Override
@@ -313,6 +334,32 @@ public abstract class GarminCoordinator extends AbstractBLEDeviceCoordinator {
     @Override
     public boolean supportsDayRespiratoryRate() {
         return true;
+    }
+
+    @Override
+    public boolean supportsPai() {
+        // Intensity Minutes
+        return true;
+    }
+
+    @Override
+    public int getPaiName() {
+        return R.string.garmin_intensity_minutes;
+    }
+
+    @Override
+    public boolean supportsPaiTime() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsPaiLow() {
+        return false;
+    }
+
+    @Override
+    public int getPaiTarget() {
+        return 150;
     }
 
     @Override

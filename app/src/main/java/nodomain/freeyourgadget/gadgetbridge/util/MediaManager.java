@@ -120,6 +120,8 @@ public class MediaManager {
                 musicSpec.artist = d.getString(MediaMetadata.METADATA_KEY_ARTIST);
             if (d.containsKey(MediaMetadata.METADATA_KEY_ALBUM))
                 musicSpec.album = d.getString(MediaMetadata.METADATA_KEY_ALBUM);
+            if (d.containsKey(MediaMetadata.METADATA_KEY_ALBUM_ART))
+                musicSpec.albumArt = d.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);
             if (d.containsKey(MediaMetadata.METADATA_KEY_TITLE))
                 musicSpec.track = d.getString(MediaMetadata.METADATA_KEY_TITLE);
             if (d.containsKey(MediaMetadata.METADATA_KEY_DURATION))

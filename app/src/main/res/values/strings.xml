@@ -1022,6 +1022,8 @@
     <string name="sleep_avg">Sleep AVG</string>
     <string name="lowest">Lowest</string>
     <string name="highest">Highest</string>
+    <string name="sleep_score">Sleep score</string>
+    <string name="sleep_score_value">Score: %1d</string>
     <string name="stats_empty_value">-</string>
     <string name="time_empty_value" translatable="false">--:--</string>
     <string name="date_placeholders__date__time">%1s, %1s</string>
@@ -1751,8 +1753,10 @@
     <string name="devicetype_garmin_fenix_6_sapphire">Garmin Fenix 6 Sapphire</string>
     <string name="devicetype_garmin_fenix_6s_pro">Garmin Fenix 6S Pro</string>
     <string name="devicetype_garmin_fenix_6s_sapphire">Garmin Fenix 6S Sapphire</string>
+    <string name="devicetype_garmin_fenix_6x_pro_solar">Garmin Fenix 6X Pro Solar</string>
     <string name="devicetype_garmin_fenix_7">Garmin Fenix 7</string>
     <string name="devicetype_garmin_fenix_7s">Garmin Fenix 7S</string>
+    <string name="devicetype_garmin_fenix_7x">Garmin Fenix 7X</string>
     <string name="devicetype_garmin_fenix_7_pro">Garmin Fenix 7 Pro</string>
     <string name="devicetype_garmin_fenix_8">Garmin Fenix 8</string>
     <string name="devicetype_garmin_instinct">Garmin Instinct</string>
@@ -1804,6 +1808,7 @@
     <string name="devicetype_roidmi">Roidmi</string>
     <string name="devicetype_roidmi3">Roidmi 3</string>
     <string name="devicetype_y5">Y5</string>
+    <string name="devicetype_casioecbs100">Casio ECB-S100</string>
     <string name="devicetype_casiogb6900">Casio GB-6900</string>
     <string name="devicetype_casiogbx100">Casio GBX-100</string>
     <string name="devicetype_casiogwb5600">Casio GW-B5600</string>
@@ -1861,6 +1866,7 @@
     <string name="devicetype_huawei_band8">Huawei Band 8</string>
     <string name="devicetype_huawei_band9">Huawei Band 9</string>
     <string name="devicetype_huawei_watch_gt">Huawei Watch GT</string>
+    <string name="devicetype_huawei_band2pro">Huawei Band 2 (Pro)</string>
     <string name="devicetype_huawei_band3pro">Huawei Band 3 (Pro)</string>
     <string name="devicetype_huawei_band4pro">Huawei Band 4 (Pro)</string>
     <string name="devicetype_huawei_watchgt2">Huawei Watch GT 2 (Pro)</string>
@@ -1878,10 +1884,12 @@
     <string name="devicetype_huawei_watchultimate">Huawei Watch Ultimate</string>
     <string name="devicetype_huawei_watch3">Huawei Watch 3 (Pro)</string>
     <string name="devicetype_huawei_watch4pro">Huawei Watch 4 (Pro)</string>
+    <string name="devicetype_huawei_freebuds_5i">Huawei FreeBuds 5i</string>
     <string name="devicetype_femometer_vinca2">Femometer Vinca II</string>
     <string name="devicetype_xiaomi_watch_lite">Xiaomi Watch Lite</string>
     <string name="devicetype_redmiwatch3active">Redmi Watch 3 Active</string>
     <string name="devicetype_redmiwatch3">Redmi Watch 3</string>
+    <string name="devicetype_redmi_buds_4_active">Redmi Buds 4 Active</string>
     <string name="devicetype_redmi_buds_5_pro">Redmi Buds 5 Pro</string>
     <string name="devicetype_redmi_smart_band_2">Redmi Smart Band 2</string>
     <string name="devicetype_redmi_watch_2">Redmi Watch 2</string>
@@ -1889,9 +1897,11 @@
     <string name="devicetype_redmi_smart_band_pro">Redmi Smart Band Pro</string>
     <string name="devicetype_redmi_watch_4">Redmi Watch 4</string>
     <string name="devicetype_redmi_watch_5_active">Redmi Watch 5 Active</string>
+    <string name="devicetype_redmi_watch_5_lite">Redmi Watch 5 Lite</string>
     <string name="devicetype_colmi_r02">Colmi R02</string>
     <string name="devicetype_colmi_r03">Colmi R03</string>
     <string name="devicetype_colmi_r06">Colmi R06</string>
+    <string name="devicetype_colmi_r09">Colmi R09</string>
     <string name="devicetype_colmi_r10">Colmi R10</string>
     <string name="devicetype_bandw_pseries">Bowers and Wilkins P series</string>
     <string name="choose_auto_export_location">Choose export location</string>
@@ -2241,6 +2251,9 @@
     <string name="avgStrokeRate">Average Stroke Rate</string>
     <string name="maxStrokeRate">Max Stroke Rate</string>
     <string name="strokes">Total Strokes</string>
+    <string name="avgJumpRate">Average Jump Rate</string>
+    <string name="maxJumpRate">Max Jump Rate</string>
+    <string name="totalJumps">Total Jumps</string>
     <string name="averageLapPace">Average Lap Pace</string>
     <string name="swolfIndex">SWOLF</string>
     <string name="swolfAvg">Average swolf</string>
@@ -2256,6 +2269,7 @@
     <string name="averageSpeed">Average Speed</string>
     <string name="stepRateSum">Sum of step rate</string>
     <string name="stepRateAvg">Average step rate</string>
+    <string name="stepRateMax">Max step rate</string>
     <string name="stepLengthAvg">Average Step Length</string>
     <string name="groundContactTimeAvg">Average ground contact time</string>
     <string name="impactAvg">Average impact</string>
@@ -2296,6 +2310,8 @@
     <string name="strokes_second">str/s</string>
     <string name="strokes_minute">str/min</string>
     <string name="strokes_unit">str</string>
+    <string name="jumps_minute">jumps/min</string>
+    <string name="jumps_unit">jumps</string>
     <string name="seconds">sec</string>
     <string name="milliseconds">milliseconds</string>
     <string name="milliseconds_ms">ms</string>
@@ -2314,6 +2330,7 @@
     <string name="Pace">Pace</string>
     <!-- activity summary groups-->
     <string name="Strokes">Strokes</string>
+    <string name="Jumps">Jumps</string>
     <string name="Swimming">Swimming</string>
     <string name="Distance">Distance</string>
     <string name="Elevation">Elevation</string>
@@ -2477,6 +2494,7 @@
     <string name="watchface_widget_type_active_mins">Active minutes</string>
     <string name="watchface_widget_type_chance_rain">Chance of rain</string>
     <string name="watchface_widget_type_uv_index">UV index</string>
+    <string name="watchface_widget_type_sp02">SpO2</string>
     <string name="watchface_setting_title_power_saving">Power saving</string>
     <string name="watchface_setting_power_saving_display">Disable display updates while off wrist</string>
     <string name="watchface_setting_power_saving_hands">Disable hands movement while off wrist</string>
@@ -2630,8 +2648,8 @@
     <string name="redmi_buds_5_pro_combo_all">ANC / Transparency / Off</string>
     <string name="redmi_buds_5_pro_double_connection">Double Connection</string>
     <string name="redmi_buds_5_pro_double_connection_description">Allow the earbuds to connect to two devices at the same time</string>
-<!--    <string name="redmi_buds_5_pro_spatial_audio">Spatial Audio</string>-->
-<!--    <string name="redmi_buds_5_pro_spatial_audio_mode">Spatial Audio Mode</string>-->
+    <!--    <string name="redmi_buds_5_pro_spatial_audio">Spatial Audio</string>-->
+    <!--    <string name="redmi_buds_5_pro_spatial_audio_mode">Spatial Audio Mode</string>-->
     <string name="redmi_buds_5_pro_adaptive_sound">Adaptive Sound</string>
     <string name="redmi_buds_5_pro_adaptive_sound_description">Adjusts the sound according to the ear shape and the environment</string>
     <string name="redmi_buds_5_pro_equalizer_preset_standard">Standard</string>
@@ -2725,8 +2743,8 @@
     <string name="pref_adaptive_volume_control_title">Adaptive volume control</string>
     <string name="pref_adaptive_noise_cancelling_title">Adaptive ANC</string>
     <string name="pref_adaptive_noise_cancelling_summary">Set the strength of the ANC automatically depending on the ambient sound level</string>
-<!--    <string name="pref_personalized_noise_cancelling_title">Personalized ANC</string>-->
-<!--    <string name="pref_personalized_noise_cancelling_summary">Set whether to use personalized active noise cancelling</string>-->
+    <!--    <string name="pref_personalized_noise_cancelling_title">Personalized ANC</string>-->
+    <!--    <string name="pref_personalized_noise_cancelling_summary">Set whether to use personalized active noise cancelling</string>-->
     <string name="sony_speak_to_chat">Speak-to-chat</string>
     <string name="sony_speak_to_chat_summary">Turn off noise cancelling automatically when you start talking.</string>
     <string name="sony_speak_to_chat_sensitivity">Voice Detection Sensitivity</string>
@@ -2902,7 +2920,6 @@
     <string name="pref_activity_recognition_mode_ask">ask</string>
     <string name="pref_activity_recognition_mode_auto">auto</string>
     <string name="pref_continuous_skin_temperature_measurement_title">Continuous skin temperature measurement</string>
-    <string name="pref_continuous_skin_temperature_measurement_description">Temperature retrieval is not currently supported. This setting only enable continuous measurement on the device</string>
 
     <string name="menuitem_menu">Menu</string>
     <string name="fossil_hr_button_config_info">Some buttons cannot be configured because their functions are hard-coded in the watch firmware.\n\nWarning: long-pressing the upper button when a watchface from the official Fossil app is installed will also toggle between showing/hiding widgets.</string>
@@ -2979,6 +2996,7 @@
     <string name="steps_streaks_total_steps_average_hint">Total average %d steps per day</string>
     <string name="step_streaks_achievements_sharing_message">My daily step achievements!</string>
     <string name="step_streaks_achievements_sharing_title">Steps Achievements</string>
+    <string name="weekly_total">Weekly total</string>
     <string name="prefs_hourly_chime">Hourly chime</string>
     <string name="prefs_hourly_chime_summary">The watch will beep once an hour</string>
     <string name="devicetype_flipper_zero">Flipper zero</string>
@@ -3207,6 +3225,7 @@
     <string name="devicetype_mi_watch_color_sport">Mi Watch Color Sport</string>
     <string name="devicetype_pixoo">Pixoo</string>
     <string name="not_set">Not set</string>
+    <string name="garmin_intensity_minutes">Intensity Minutes</string>
     <string name="pref_vitality_score_title">Vitality Score</string>
     <string name="pref_vitality_score_7_day_title">7-day progress</string>
     <string name="pref_vitality_score_7_day_summary">Get a notification when your vitality score reaches 30, 60 or 100 in the past 7 days</string>
@@ -3543,4 +3562,19 @@
     <string name="pref_darkmode">Dark Mode</string>
     <string name="pref_dark_mode">Dark Mode</string>
     <string name="pref_alarm_sync">Automatic alarm sync</string>
+    <string name="about_build_details_copied_to_clipboard">Build details copied to clipboard</string>
+    <string name="devicetype_marstek_b2500">Marstek B2500</string>
+    <string name="battery_discharge_intervals">Battery Discharge Intervals</string>
+    <string name="discharge_interval_1">Discharge interval 1</string>
+    <string name="discharge_interval_2">Discharge interval 2</string>
+    <string name="discharge_interval_3">Discharge interval 3</string>
+    <string name="discharge_interval_4">Discharge interval 4</string>
+    <string name="discharge_interval_5">Discharge interval 5</string>
+    <string name="power_w">Power in W</string>
+    <string name="manual_discharge_summary">when disabled, this assumes intelligent discharge controlled by an external power meter (not supported by Gadgetbridge)</string>
+    <string name="manual_discharge">Manual discharge intervals</string>
+    <string name="summary_battery_discharge_intervals_set">Send configuration below to device</string>
+    <string name="battery_minimum_charge">Minimum battery charge in %</string>
+    <string name="battery_allow_pass_though_summary">When enabled, the battery can be charged while discharging</string>
+    <string name="battery_allow_pass_through">Allow battery pass-through</string>
 </resources>

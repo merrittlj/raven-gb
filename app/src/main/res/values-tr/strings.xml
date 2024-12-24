@@ -1731,9 +1731,7 @@
     <string name="portuguese_br">Portekizce (Brezilya)</string>
     <string name="pref_title_banglejs_webview_url">Uygulama yükleyici URL\'si</string>
     <string name="pref_summary_banglejs_webview_url">Özel bir uygulama yükleyicisi istiyorsanız https://…/android.html URL\'nizi buraya koyun. Aksi takdirde https://banglejs.com/apps için boş bırakın</string>
-    <string name="permission_location">%1$s ekranınız kapalıyken bile saatinize bağlı kalmasını sağlamak için arka planda konumunuza erişmeye ihtiyaç duyuyor.
-\n
-\nKabul etmek için lütfen \'%2$s\' düğmesine dokunun.</string>
+    <string name="permission_location">%1$s ekranınız kapalıyken bile saatinize bağlı kalmasını sağlamak için arka planda konumunuza erişmeye ihtiyaç duyuyor. \n \nKabul etmek için lütfen \'%2$s\' düğmesine dokunun.</string>
     <string name="info_no_devices_connected">Bağlı aygıt yok</string>
     <string name="info_connected_count">%d aygıt bağlı</string>
     <string name="estonian">Estonca</string>
@@ -3534,4 +3532,15 @@
     <string name="idasen_pref_stand_height">Ayakta konumu yüksekliği (santimetre cinsinden)</string>
     <string name="idasen_pref_value_warning">Değer 62 - 126 cm arasında olmalıdır</string>
     <string name="idasen_pref_sit_height">Otur konumu yüksekliği (santimetre cinsinden)</string>
+    <string name="active_calories">Aktif kalori</string>
+    <string name="active_calories_short">Aktif</string>
+    <string name="music_upload_info">You are about to upload the following music file:\n\n%1$s\nSong title: %2$s\nAlbum: %3$s\n</string>
+    <string name="active_calories_goal">Aktif hedef</string>
+    <string name="sleep_avg">Uyku ortalaması</string>
+    <string name="lowest">En düşük</string>
+    <string name="sleep_score">Uyku skoru</string>
+    <string name="sleep_score_value">Skor: %1d</string>
+    <string name="title_activity_musicmanager">Müzik Yöneticisi</string>
+    <string name="highest">En yüksek</string>
+    <string name="total_calories_burnt">Toplam yakılan</string>
 </resources>

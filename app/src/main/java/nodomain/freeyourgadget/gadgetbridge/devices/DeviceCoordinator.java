@@ -237,6 +237,12 @@ public interface DeviceCoordinator {
     boolean supportsTemperatureMeasurement();
 
     /**
+     * Returns true if continuous temperature measurement used in device
+     * (with this coordinator).
+     */
+    boolean supportsContinuousTemperature();
+
+    /**
      * Returns true if SpO2 measurement and fetching is supported by the device
      * (with this coordinator).
      */
@@ -265,6 +271,16 @@ public interface DeviceCoordinator {
      * (light, moderate, high).
      */
     boolean supportsPaiTime();
+
+    /**
+     * Returns true if the device is capable of providing the time contribution for light PAI type.
+     */
+    boolean supportsPaiLow();
+
+    /**
+     * Returns the PAI target - usually 100.
+     */
+    int getPaiTarget();
 
     /**
      * Indicates whether the device supports respiratory rate tracking.

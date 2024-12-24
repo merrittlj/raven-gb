@@ -23,6 +23,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.annotation.NonNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,9 +182,7 @@ public class ColmiR0xDeviceSupport extends AbstractBTLEDeviceSupport {
                     int levelResponse = value[1];
                     boolean charging = value[2] == 1;
                     LOG.info("Received battery level response: {}% (charging: {})", levelResponse, charging);
-                    GBDeviceEventBatteryInfo batteryEvent = new GBDeviceEventBatteryInfo();
-                    batteryEvent.level = levelResponse;
-                    batteryEvent.state = charging ? BatteryState.BATTERY_CHARGING : BatteryState.BATTERY_NORMAL;
+                    GBDeviceEventBatteryInfo batteryEvent = createDeviceBatteryInfoEvent(levelResponse, charging);
                     evaluateGBDeviceEvent(batteryEvent);
                     break;
                 case ColmiR0xConstants.CMD_PHONE_NAME:
@@ -296,7 +296,11 @@ public class ColmiR0xDeviceSupport extends AbstractBTLEDeviceSupport {
                             daysAgo++;
                             fetchHistoryHRV();
                         } else {
-                            fetchRecordedDataFinished();
+                            if (getDevice().getDeviceCoordinator().supportsTemperatureMeasurement()) {
+                                fetchTemperature();
+                            } else {
+                                fetchRecordedDataFinished();
+                            }
                         }
                     }
                     break;
@@ -319,10 +323,9 @@ public class ColmiR0xDeviceSupport extends AbstractBTLEDeviceSupport {
                             break;
                         case ColmiR0xConstants.NOTIFICATION_BATTERY_LEVEL:
                             int levelNotif = value[2];
-                            LOG.info("Received battery level notification: {}%", levelNotif);
-                            GBDeviceEventBatteryInfo batteryNotifEvent = new GBDeviceEventBatteryInfo();
-                            batteryNotifEvent.state = BatteryState.BATTERY_NORMAL;
-                            batteryNotifEvent.level = levelNotif;
+                            charging = value[3] == 1;
+                            LOG.info("Received battery level notification: {}% (charging: {})", levelNotif, charging);
+                            GBDeviceEventBatteryInfo batteryNotifEvent = createDeviceBatteryInfoEvent(levelNotif, charging);
                             evaluateGBDeviceEvent(batteryNotifEvent);
                             break;
                         case ColmiR0xConstants.NOTIFICATION_LIVE_ACTIVITY:
@@ -371,6 +374,10 @@ public class ColmiR0xDeviceSupport extends AbstractBTLEDeviceSupport {
                         return true;
                     }
                     switch (value[1]) {
+                        case ColmiR0xConstants.BIG_DATA_TYPE_TEMPERATURE:
+                            ColmiR0xPacketHandler.historicalTemperature(getDevice(), value);
+                            fetchRecordedDataFinished();
+                            break;
                         case ColmiR0xConstants.BIG_DATA_TYPE_SLEEP:
                             ColmiR0xPacketHandler.historicalSleep(getDevice(), getContext(), value);
 
@@ -398,6 +405,14 @@ public class ColmiR0xDeviceSupport extends AbstractBTLEDeviceSupport {
         }
 
         return false;
+    }
+
+    @NonNull
+    private static GBDeviceEventBatteryInfo createDeviceBatteryInfoEvent(int levelResponse, boolean charging) {
+        GBDeviceEventBatteryInfo batteryEvent = new GBDeviceEventBatteryInfo();
+        batteryEvent.level = levelResponse;
+        batteryEvent.state = charging ? BatteryState.BATTERY_CHARGING : BatteryState.BATTERY_NORMAL;
+        return batteryEvent;
     }
 
     private byte[] buildPacket(byte[] contents) {
@@ -704,5 +719,21 @@ public class ColmiR0xDeviceSupport extends AbstractBTLEDeviceSupport {
         byte[] hrvHistoryRequest = buildPacket(hrvHistoryRequestBB.array());
         LOG.info("Fetch historical HRV data request sent ({}): {}", syncingDay.getTime(), StringUtils.bytesToHex(hrvHistoryRequest));
         sendWrite("hrvHistoryRequest", hrvHistoryRequest);
+    }
+
+    private void fetchTemperature() {
+        getDevice().setBusyTask(getContext().getString(R.string.busy_task_fetch_temperature));
+        getDevice().sendDeviceUpdateIntent(getContext());
+        byte[] temperatureHistoryRequest = new byte[]{
+                ColmiR0xConstants.CMD_BIG_DATA_V2,
+                ColmiR0xConstants.BIG_DATA_TYPE_TEMPERATURE,
+                0x01,
+                0x00,
+                0x3e,
+                (byte) 0x81,
+                0x02
+        };
+        LOG.info("Fetch historical temperature data request sent: {}", StringUtils.bytesToHex(temperatureHistoryRequest));
+        sendCommand("temperatureHistoryRequest", temperatureHistoryRequest);
     }
 }

@@ -95,7 +95,7 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     private Pattern supportedDeviceName = null;
 
     /**
-     * This method should return a ReGexp pattern that will matched against a found device
+     * This method should return a Regexp pattern that will matched against a found device
      * to check whether this coordinator supports that device.
      * If more sophisticated logic is needed to determine device support, the supports(GBDeviceCandidate)
      * should be overridden.
@@ -530,6 +530,11 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     }
 
     @Override
+    public boolean supportsContinuousTemperature() {
+        return false;
+    }
+
+    @Override
     public boolean supportsSpo2(final GBDevice device) {
         return false;
     }
@@ -552,6 +557,16 @@ public abstract class AbstractDeviceCoordinator implements DeviceCoordinator {
     @Override
     public boolean supportsPaiTime() {
         return supportsPai();
+    }
+
+    @Override
+    public boolean supportsPaiLow() {
+        return supportsPai();
+    }
+
+    @Override
+    public int getPaiTarget() {
+        return 100;
     }
 
     @Override

@@ -1725,9 +1725,7 @@
     <string name="quick_alarm_description">Будильник з віджета</string>
     <string name="pref_title_banglejs_webview_url">URL-адреса завантажувача застосунку</string>
     <string name="pref_summary_banglejs_webview_url">Якщо ви хочете використовувати власний завантажувач застосунків, вкажіть вашу URL-адресу https://…/android.html тут. В іншому випадку залиште порожнім для https://banglejs.com/apps</string>
-    <string name="permission_location">%1$s потрібує доступ до вашого місцеперебування у фоновому режимі, щоб мати можливість залишатися з\'єднаним з годинником, навіть коли екран вимкнено.
-\n
-\nНатисніть «%2$s», щоб погодитися.</string>
+    <string name="permission_location">%1$s потрібує доступ до вашого місцеперебування у фоновому режимі, щоб мати можливість залишатися з\'єднаним з годинником, навіть коли екран вимкнено. \n \nНатисніть «%2$s», щоб погодитися.</string>
     <string name="info_no_devices_connected">Немає під\'єднаних пристроїв</string>
     <string name="info_connected_count">Під\'єднано пристроїв: %d</string>
     <string name="bengali">Бенгальська</string>
@@ -2943,4 +2941,18 @@
     <string name="minutes_180">180 хвилин</string>
     <string name="minutes_240">240 хвилин</string>
     <string name="activity_type_rem_sleep">Швидкий сон</string>
+    <string name="title_activity_musicmanager">Музикальний менеджер</string>
+    <string name="pref_description_user_interface">Тема, головний екран</string>
+    <string name="pref_description_dashboard">Віджети, пристрої для додавання</string>
+    <string name="pref_description_automations">Автоекспорт, автоотримання</string>
+    <string name="pref_description_developer_options">Журнали, Intent API</string>
+    <string name="pref_description_deprecated_functionalities">Налаштування, які будуть видалені в наступній версії</string>
+    <string name="pref_title_user_interface">Інтерфейс користувача</string>
+    <string name="pref_title_nagivation_apps">Застосунки для навігації</string>
+    <string name="pref_header_external_integrations">Зовнішні інтеграції</string>
+    <string name="pref_header_automations">Автоматизація</string>
+    <string name="pref_description_general">Запуск, мова, регіон, розташування</string>
+    <string name="pref_description_about_you">Дата народження, стать, зріст, вага, цілі</string>
+    <string name="pref_description_notifications">Сповіщення у застосунку, білий/чорний список</string>
+    <string name="pref_header_main_screen">Головний екран</string>
 </resources>

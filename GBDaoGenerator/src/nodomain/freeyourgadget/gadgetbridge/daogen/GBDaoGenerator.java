@@ -54,7 +54,7 @@ public class GBDaoGenerator {
 
 
     public static void main(String[] args) throws Exception {
-        final Schema schema = new Schema(90, MAIN_PACKAGE + ".entities");
+        final Schema schema = new Schema(93, MAIN_PACKAGE + ".entities");
 
         Entity userAttributes = addUserAttributes(schema);
         Entity user = addUserInfo(schema, userAttributes);
@@ -81,6 +81,7 @@ public class GBDaoGenerator {
         addHuamiSleepRespiratoryRateSample(schema, user, device);
         addXiaomiActivitySample(schema, user, device);
         addXiaomiSleepTimeSamples(schema, user, device);
+        addHeartPulseSamples(schema, user, device);
         addXiaomiSleepStageSamples(schema, user, device);
         addXiaomiManualSamples(schema, user, device);
         addXiaomiDailySummarySamples(schema, user, device);
@@ -130,6 +131,7 @@ public class GBDaoGenerator {
         addGarminHeartRateRestingSample(schema, user, device);
         addGarminRestingMetabolicRateSample(schema, user, device);
         addGarminSleepStatsSample(schema, user, device);
+        addGarminIntensityMinutesSample(schema, user, device);
         addPendingFile(schema, user, device);
         addWena3EnergySample(schema, user, device);
         addWena3BehaviorSample(schema, user, device);
@@ -148,6 +150,7 @@ public class GBDaoGenerator {
         addColmiSleepStageSample(schema, user, device);
         addColmiHrvValueSample(schema, user, device);
         addColmiHrvSummarySample(schema, user, device);
+        addColmiTemperatureSample(schema, user, device);
 
         addHuaweiActivitySample(schema, user, device);
 
@@ -410,6 +413,12 @@ public class GBDaoGenerator {
         return sample;
     }
 
+    private static Entity addHeartPulseSamples(Schema schema, Entity user, Entity device) {
+        Entity sample = addEntity(schema, "HeartPulseSample");
+        addCommonTimeSampleProperties("AbstractTimeSample", sample, user, device);
+        return sample;
+    }
+
     private static Entity addXiaomiSleepStageSamples(Schema schema, Entity user, Entity device) {
         Entity sample = addEntity(schema, "XiaomiSleepStageSample");
         addCommonTimeSampleProperties("AbstractTimeSample", sample, user, device);
@@ -581,6 +590,13 @@ public class GBDaoGenerator {
         hrvSummarySample.addIntProperty(SAMPLE_HRV_BASELINE_BALANCED_UPPER).codeBeforeGetter(OVERRIDE);
         hrvSummarySample.addIntProperty(SAMPLE_HRV_STATUS_NUM).codeBeforeGetter(OVERRIDE);
         return hrvSummarySample;
+    }
+
+    private static Entity addColmiTemperatureSample(Schema schema, Entity user, Entity device) {
+        Entity sample = addEntity(schema, "ColmiTemperatureSample");
+        addCommonTimeSampleProperties("AbstractTemperatureSample", sample, user, device);
+        addTemperatureProperties(sample);
+        return sample;
     }
 
     private static void addHeartRateProperties(Entity activitySample) {
@@ -806,6 +822,7 @@ public class GBDaoGenerator {
         addHeartRateProperties(activitySample);
         activitySample.addIntProperty("distanceCm").notNull().codeBeforeGetterAndSetter(OVERRIDE);
         activitySample.addIntProperty("activeCalories").notNull().codeBeforeGetterAndSetter(OVERRIDE);
+
         return activitySample;
     }
 
@@ -893,6 +910,14 @@ public class GBDaoGenerator {
         sample.addImport(MAIN_PACKAGE + ".model.SleepScoreSample");
         addCommonTimeSampleProperties("SleepScoreSample", sample, user, device);
         sample.addIntProperty("sleepScore").notNull().codeBeforeGetter(OVERRIDE);
+        return sample;
+    }
+
+    private static Entity addGarminIntensityMinutesSample(Schema schema, Entity user, Entity device) {
+        Entity sample = addEntity(schema, "GarminIntensityMinutesSample");
+        addCommonTimeSampleProperties("AbstractTimeSample", sample, user, device);
+        sample.addIntProperty("moderate");
+        sample.addIntProperty("vigorous");
         return sample;
     }
 
