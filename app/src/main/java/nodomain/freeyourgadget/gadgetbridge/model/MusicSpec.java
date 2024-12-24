@@ -17,6 +17,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 package nodomain.freeyourgadget.gadgetbridge.model;
 
+import android.graphics.Bitmap;
+
 import java.util.Objects;
 
 public class MusicSpec {
@@ -31,6 +33,7 @@ public class MusicSpec {
 
     public String artist = null;
     public String album = null;
+    public Bitmap albumArt = null;
     public String track = null;
     public int duration = MUSIC_UNKNOWN;
     public int trackCount = MUSIC_UNKNOWN;
@@ -46,6 +49,7 @@ public class MusicSpec {
         this.trackNr = old.trackNr;
         this.track = old.track;
         this.album = old.album;
+        this.albumArt = old.albumArt;
         this.artist = old.artist;
     }
 
@@ -61,6 +65,7 @@ public class MusicSpec {
 
         return Objects.equals(this.artist, musicSpec.artist) &&
                 Objects.equals(this.album, musicSpec.album) &&
+                Objects.equals(this.albumArt, musicSpec.albumArt) &&
                 Objects.equals(this.track, musicSpec.track) &&
                 this.duration == musicSpec.duration &&
                 this.trackCount == musicSpec.trackCount &&
@@ -71,6 +76,7 @@ public class MusicSpec {
     public int hashCode() {
         int result = artist != null ? artist.hashCode() : 0;
         result = 31 * result + (album != null ? album.hashCode() : 0);
+        result = 31 * result + (albumArt != null ? albumArt.hashCode() : 0);
         result = 31 * result + (track != null ? track.hashCode() : 0);
         result = 31 * result + duration;
         result = 31 * result + trackCount;
@@ -83,6 +89,7 @@ public class MusicSpec {
         return "MusicSpec{" +
                 "artist='" + artist + '\'' +
                 ", album='" + album + '\'' +
+                ", albumArt=" + albumArt + "\'" +
                 ", track='" + track + '\'' +
                 ", duration=" + duration +
                 ", trackCount=" + trackCount +
