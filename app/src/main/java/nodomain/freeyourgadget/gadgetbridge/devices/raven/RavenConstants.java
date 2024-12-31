@@ -17,6 +17,7 @@ public final class RavenConstants {
     public static final UUID UUID_CHARACTERISTIC_NAV_DISTANCE = UUID.fromString("84d73be2-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_NAV_ETA = UUID.fromString("84d73be3-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_NAV_ACTION = UUID.fromString("84d73be4-bc48-11ef-9908-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_NAV_TRIGGER = UUID.fromString("84d73be5-bc48-11ef-9908-0800200c9a66");
 
     public static final UUID UUID_SERVICE_MUSIC = UUID.fromString("982fc770-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_MUSIC_ARTIST = UUID.fromString("982fc771-bc48-11ef-9908-0800200c9a66");

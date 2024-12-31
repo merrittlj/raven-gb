@@ -6,10 +6,14 @@ import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.Dev
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -18,9 +22,14 @@ import androidx.core.text.HtmlCompat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
@@ -54,6 +63,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     private final int SCHEME_LIGHT = 0;
     private final int SCHEME_DARK = 1;
+
+    private final int TRIGGER_SET = 1;
 
     String lastArtist;
     String lastTrack;
@@ -140,7 +151,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SOURCE), source.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TITLE), title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_BODY), body.getBytes());
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TRIGGER), new byte[]{1});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TRIGGER), new byte[]{TRIGGER_SET});
         builder.queue(getQueue());
     }
 
@@ -213,7 +224,122 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ACTION), action.getBytes(StandardCharsets.UTF_8));
+
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_TRIGGER), new byte[]{TRIGGER_SET});
         builder.queue(getQueue());
+    }
+
+    private void saveBitmap(Bitmap imageToSave, String name) {
+        // To be safe, you should check that the SDCard is mounted
+        // using Environment.getExternalStorageState() before doing this.
+//        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
+//                + "/Android/data/"
+//                + getContext().getPackageName()
+//                + "/Files");
+        File mediaStorageDir = new File(
+                Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES
+                ),
+                "GB_DEBUG"
+        );
+
+        // This location works best if you want the created images to be shared
+        // between applications and persist after your app has been uninstalled.
+
+        // Create the storage directory if it does not exist
+        if (!mediaStorageDir.exists()){
+            if (!mediaStorageDir.mkdirs()){
+                return;
+            }
+        }
+        // Create a media file name
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
+        File mediaFile;
+        String mImageName="MI_" + timeStamp + "_" + name + ".jpg";
+        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
+        if (mediaFile.exists()) {
+            mediaFile.delete();
+        }
+        try {
+            FileOutputStream out = new FileOutputStream(mediaFile);
+            imageToSave.compress(Bitmap.CompressFormat.PNG, 100, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Bitmap simple(Bitmap src)
+    {
+        float threshold = 0.5f;
+
+        Bitmap bwBitmap = Bitmap.createBitmap( src.getWidth(), src.getHeight(), Bitmap.Config.RGB_565 );
+        float[] hsv = new float[ 3 ];
+        for( int col = 0; col < src.getWidth(); col++ ) {
+            for( int row = 0; row < src.getHeight(); row++ ) {
+                Color.colorToHSV( src.getPixel( col, row ), hsv );
+                if( hsv[ 2 ] > threshold ) {
+                    bwBitmap.setPixel( col, row, 0xffffffff );
+                } else {
+                    bwBitmap.setPixel( col, row, 0xff000000 );
+                }
+            }
+        }
+        return bwBitmap;
+    }
+
+    private Bitmap stucki(Bitmap src)
+    {
+        int threshold = 128;
+
+        Bitmap out = Bitmap.createBitmap(src.getWidth(), src.getHeight(),src.getConfig());
+
+        int alpha, red;
+        int pixel;
+        int gray;
+
+        int width = src.getWidth();
+        int height = src.getHeight();
+        int error = 0;
+        int errors[][] = new int[width][height];
+        for (int y = 0; y < height - 2; y++) {
+            for (int x = 2; x < width - 2; x++) {
+
+                pixel = src.getPixel(x, y);
+
+                alpha = Color.alpha(pixel);
+                red = Color.red(pixel);
+
+                gray = red;
+                if (gray + errors[x][y] < threshold) {
+                    error = gray + errors[x][y];
+                    gray = 0;
+                } else {
+                    error = gray + errors[x][y] - 255;
+                    gray = 255;
+                }
+
+                errors[x + 1][y] += (8 * error) / 42;
+                errors[x + 2][y] += (4 * error) / 42;
+
+                errors[x - 2][y + 1] += (2 * error) / 42;
+                errors[x - 1][y + 1] += (4 * error) / 42;
+                errors[x][y + 1] += (8 * error) / 42;
+                errors[x + 1][y + 1] += (4 * error) / 42;
+                errors[x + 2][y + 1] += (2 * error) / 42;
+
+                errors[x - 2][y + 2] += (1 * error) / 42;
+                errors[x - 1][y + 2] += (2 * error) / 42;
+                errors[x][y + 2] += (4 * error) / 42;
+                errors[x + 1][y + 2] += (2 * error) / 42;
+                errors[x + 2][y + 2] += (1 * error) / 42;
+
+                out.setPixel(x, y, Color.argb(alpha, gray, gray, gray));
+            }
+        }
+
+        return out;
     }
 
     @Override
@@ -261,25 +387,17 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 paint.setColorFilter(new ColorMatrixColorFilter(cm));
                 canvas.drawBitmap(resizedBitmap, 0, 0, paint);
 
-                // Convert monochrome bitmap to byte buffer
-                ByteBuffer buffer = ByteBuffer.allocate(gscaleBitmap.getRowBytes() * gscaleBitmap.getHeight());
-                gscaleBitmap.copyPixelsToBuffer(buffer);
+
+                Bitmap bwBitmap = stucki(gscaleBitmap);
+                //saveBitmap(bwBitmap, "BW");
+                ByteBuffer buffer = ByteBuffer.allocate(bwBitmap.getRowBytes() * bwBitmap.getHeight());
+                bwBitmap.copyPixelsToBuffer(buffer);
                 byte[] bytes = buffer.array();
-                for (int i = 0; i < bytes.length; ++i) {
-                    bytes[i] = (byte) (bytes[i] & 0xff);
-                }
 
-                Toast toast = new Toast(getContext());
-                ImageView view = new ImageView(getContext());
-                // set resource to gscaleBitmap here
-                view.setImageResource(R.drawable.ic_device_banglejs);
-                toast.setView(view);
-                toast.show();
-
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), bytes);
+                //builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), bytes);
                 lastAlbumArt = musicSpec.albumArt;
             }
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{1});
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
 
             builder.queue(getQueue());
         } catch (Exception e) {
@@ -318,7 +436,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) a.getHour()});
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) a.getRepetition()});
 
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{TRIGGER_SET});
         }
         builder.queue(getQueue());
     }
