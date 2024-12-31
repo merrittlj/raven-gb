@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
@@ -66,6 +67,11 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     private final int TRIGGER_SET = 1;
 
+    String lastInstruction;
+    String lastDistance;
+    String lastETA;
+    String lastAction;
+
     String lastArtist;
     String lastTrack;
     String lastAlbum;
@@ -98,6 +104,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.add(new SetDeviceStateAction(getDevice(), GBDevice.State.INITIALIZED, getContext()));
         LOG.info("Initialization Done");
 
+        builder.requestMtu(512);
         return builder;
     }
 
@@ -171,9 +178,20 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         if (navigationInfoSpec.ETA == null) {
             navigationInfoSpec.ETA = "";
         }
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_INSTRUCTION), navigationInfoSpec.instruction.getBytes(StandardCharsets.UTF_8));
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_DISTANCE), navigationInfoSpec.distanceToTurn.getBytes(StandardCharsets.UTF_8));
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ETA), navigationInfoSpec.ETA.getBytes(StandardCharsets.UTF_8));
+
+        if (!navigationInfoSpec.instruction.equals(lastInstruction)) {
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_INSTRUCTION), navigationInfoSpec.instruction.getBytes(StandardCharsets.UTF_8));
+            lastInstruction = navigationInfoSpec.instruction;
+        }
+        if (!navigationInfoSpec.distanceToTurn.equals(lastDistance)) {
+            String dist = navigationInfoSpec.distanceToTurn.replaceAll("\\s+","");
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_DISTANCE), dist.getBytes(StandardCharsets.UTF_8));
+            lastDistance = navigationInfoSpec.distanceToTurn;
+        }
+        if (!navigationInfoSpec.ETA.equals(lastETA)) {
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ETA), navigationInfoSpec.ETA.getBytes(StandardCharsets.UTF_8));
+            lastETA = navigationInfoSpec.ETA;
+        }
 
         String action;
         // This is PineTime's protocol, but it is a solid implementation
@@ -223,7 +241,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 break;
         }
 
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ACTION), action.getBytes(StandardCharsets.UTF_8));
+        if (!action.equals(lastAction)) {
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ACTION), action.getBytes(StandardCharsets.UTF_8));
+            lastAction = action;
+        }
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_TRIGGER), new byte[]{TRIGGER_SET});
         builder.queue(getQueue());
@@ -390,11 +411,18 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
                 Bitmap bwBitmap = stucki(gscaleBitmap);
                 //saveBitmap(bwBitmap, "BW");
-                ByteBuffer buffer = ByteBuffer.allocate(bwBitmap.getRowBytes() * bwBitmap.getHeight());
+                ByteBuffer buffer = ByteBuffer.allocate(bwBitmap.getRowBytes() * bwBitmap.getWidth());
                 bwBitmap.copyPixelsToBuffer(buffer);
                 byte[] bytes = buffer.array();
 
-                //builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), bytes);
+                int cap = 25 * 200;
+                final int chunkSize = 512;
+                for (int i = 0; i < cap / chunkSize; ++i) {
+                    int end = (i * chunkSize) + chunkSize;
+                    if (end > cap) end = cap;
+                    byte[] chunk = Arrays.copyOfRange(bytes, (i * chunkSize), end);
+                    builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunk);
+                }
                 lastAlbumArt = musicSpec.albumArt;
             }
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
