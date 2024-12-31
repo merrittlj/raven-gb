@@ -20,6 +20,7 @@ package nodomain.freeyourgadget.gadgetbridge.externalevents;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 
 import org.slf4j.Logger;
@@ -60,6 +61,8 @@ public class MusicPlaybackReceiver extends BroadcastReceiver {
                 musicSpec.artist = (String) incoming;
             } else if (incoming instanceof String && "album".equals(key)) {
                 musicSpec.album = (String) incoming;
+            } else if (incoming instanceof Bitmap && "album_art".equals(key)) {
+                musicSpec.albumArt = (Bitmap) incoming;
             } else if (incoming instanceof String && "track".equals(key)) {
                 musicSpec.track = (String) incoming;
             } else if (incoming instanceof String && "title".equals(key) && musicSpec.track == null) {

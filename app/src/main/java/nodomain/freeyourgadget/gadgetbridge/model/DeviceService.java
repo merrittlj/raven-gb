@@ -113,6 +113,7 @@ public interface DeviceService extends EventHandler {
     String EXTRA_CANNEDMESSAGES_TYPE = "cannedmessages_type";
     String EXTRA_MUSIC_ARTIST = "music_artist";
     String EXTRA_MUSIC_ALBUM = "music_album";
+    String EXTRA_MUSIC_ALBUM_ART = "music_album_art";
     String EXTRA_MUSIC_TRACK = "music_track";
     String EXTRA_MUSIC_DURATION = "music_duration";
     String EXTRA_MUSIC_TRACKNR = "music_tracknr";

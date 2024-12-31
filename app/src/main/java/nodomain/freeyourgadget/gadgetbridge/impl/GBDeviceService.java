@@ -24,11 +24,13 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -296,9 +298,16 @@ public class GBDeviceService implements DeviceService {
 
     @Override
     public void onSetMusicInfo(MusicSpec musicSpec) {
+        if (musicSpec.albumArt != null) {
+            // Just creating a blank Bitmap is easiest
+            musicSpec.albumArt = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        }
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        musicSpec.albumArt.compress(Bitmap.CompressFormat.PNG, 100, stream);
         Intent intent = createIntent().setAction(ACTION_SETMUSICINFO)
                 .putExtra(EXTRA_MUSIC_ARTIST, musicSpec.artist)
                 .putExtra(EXTRA_MUSIC_ALBUM, musicSpec.album)
+                .putExtra(EXTRA_MUSIC_ALBUM_ART, stream.toByteArray())
                 .putExtra(EXTRA_MUSIC_TRACK, musicSpec.track)
                 .putExtra(EXTRA_MUSIC_DURATION, musicSpec.duration)
                 .putExtra(EXTRA_MUSIC_TRACKCOUNT, musicSpec.trackCount)

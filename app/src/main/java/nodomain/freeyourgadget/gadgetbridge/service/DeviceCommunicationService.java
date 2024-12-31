@@ -34,6 +34,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.media.AudioManager;
 import android.net.Uri;
@@ -966,6 +967,8 @@ public class DeviceCommunicationService extends Service implements SharedPrefere
                 MusicSpec musicSpec = new MusicSpec();
                 musicSpec.artist = intentCopy.getStringExtra(EXTRA_MUSIC_ARTIST);
                 musicSpec.album = intentCopy.getStringExtra(EXTRA_MUSIC_ALBUM);
+                byte[] byteArray = intentCopy.getByteArrayExtra(EXTRA_MUSIC_ALBUM_ART);
+                musicSpec.albumArt = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
                 musicSpec.track = intentCopy.getStringExtra(EXTRA_MUSIC_TRACK);
                 musicSpec.duration = intentCopy.getIntExtra(EXTRA_MUSIC_DURATION, 0);
                 musicSpec.trackCount = intentCopy.getIntExtra(EXTRA_MUSIC_TRACKCOUNT, 0);
