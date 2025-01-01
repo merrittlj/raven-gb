@@ -298,7 +298,7 @@ public class GBDeviceService implements DeviceService {
 
     @Override
     public void onSetMusicInfo(MusicSpec musicSpec) {
-        if (musicSpec.albumArt != null) {
+        if (musicSpec.albumArt == null) {
             // Just creating a blank Bitmap is easiest
             musicSpec.albumArt = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
         }

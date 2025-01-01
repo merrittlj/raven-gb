@@ -363,6 +363,30 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         return out;
     }
 
+    private Bitmap byteArrayToBitmap(byte[] byteArray, int width, int height) {
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+
+        int pixelIndex = 0; // Index for each pixel in the byte array
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Get the byte for the current pixel
+                int byteIndex = pixelIndex / 8; // Each byte represents 8 pixels
+                int bitOffset = pixelIndex % 8; // Bit position within the byte
+
+                // Check the value of the current bit (1 bit per pixel)
+                boolean isWhite = ((byteArray[byteIndex] >> (7 - bitOffset)) & 1) == 1;
+
+                // Set the pixel to white or black based on the bit value
+                int color = isWhite ? Color.WHITE : Color.BLACK;
+                bitmap.setPixel(x, y, color);
+
+                pixelIndex++;
+            }
+        }
+
+        return bitmap;
+    }
+
     @Override
     public void onSetMusicInfo(MusicSpec musicSpec) {
         // Raven only uses artist, song name, album, and album art
@@ -396,6 +420,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 lastAlbum = musicSpec.album;
             }
             if (!musicSpec.albumArt.equals(lastAlbumArt)) {
+                // Resize image to 200x200, convert to grayscale, stucki dither to BW, compress byte-per-pixel to bit-per-pixel
+
                 // Resize image
                 Bitmap resizedBitmap = Bitmap.createScaledBitmap(musicSpec.albumArt, 200, 200, false);
 
@@ -411,16 +437,36 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
                 Bitmap bwBitmap = stucki(gscaleBitmap);
                 //saveBitmap(bwBitmap, "BW");
-                ByteBuffer buffer = ByteBuffer.allocate(bwBitmap.getRowBytes() * bwBitmap.getWidth());
-                bwBitmap.copyPixelsToBuffer(buffer);
-                byte[] bytes = buffer.array();
 
-                int cap = 25 * 200;
+                // Convert byte-per-pixel bitmap to bit-per-pixel array
+                byte[] bytesCompacted = new byte[(bwBitmap.getHeight() / 8) * bwBitmap.getWidth()];
+                for (int y = 0; y < bwBitmap.getHeight(); y++) {
+                    for (int x = 0; x < bwBitmap.getWidth(); x++) {
+                        int pixel = bwBitmap.getPixel(x, y);
+                        int red = Color.red(pixel); // All channels are either 0 or 255, just check red
+
+                        // Convert pixel to 0 (black) or 1 (white)
+                        // But as this is already dithered in BW
+                        int binaryValue = (red == 255) ? 1 : 0;
+
+                        // Find the index of the byte and the position in that byte
+                        int byteIndex = (y * bwBitmap.getWidth() + x) / 8;
+                        int bitIndex = (y * bwBitmap.getHeight() + x) % 8;
+
+                        // Set the corresponding bit in the byte
+                        if (binaryValue == 1) {
+                            bytesCompacted[byteIndex] |= (1 << (7 - bitIndex)); // Set the bit at the correct position
+                        }
+                    }
+                }
+
+                //Bitmap converted = byteArrayToBitmap(bytesCompacted, 200, 200);
+
                 final int chunkSize = 512;
-                for (int i = 0; i < cap / chunkSize; ++i) {
-                    int end = (i * chunkSize) + chunkSize;
-                    if (end > cap) end = cap;
-                    byte[] chunk = Arrays.copyOfRange(bytes, (i * chunkSize), end);
+                for (int i = 0; i < Math.ceil((double) bytesCompacted.length / chunkSize); ++i) {
+                    int end = Math.min((i + 1) * chunkSize, bytesCompacted.length);
+                    byte[] chunk = Arrays.copyOfRange(bytesCompacted, (i * chunkSize), end);
+                    
                     builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunk);
                 }
                 lastAlbumArt = musicSpec.albumArt;
