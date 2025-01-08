@@ -3,19 +3,18 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_ALARM_SYNC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_WATCHFACE;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
 
+import android.bluetooth.BluetoothGatt;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.os.Environment;
-import android.provider.MediaStore;
-import android.widget.ImageView;
-import android.widget.Toast;
 
 import androidx.core.text.HtmlCompat;
 
@@ -24,14 +23,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.UUID;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
@@ -51,13 +49,14 @@ import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattService;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.SetDeviceStateAction;
-import nodomain.freeyourgadget.gadgetbridge.util.GB;
 
 public class RavenSupport extends AbstractBTLEDeviceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(RavenSupport.class);
     private final int NotifySourceCut = 15;
     private final int NotifyTitleCut = 15;
     private final int NotifyBodyCut = 90;
+
+    private final int InstructionCut = 40;
 
     private final int EVENT_TYPE_ALARM = 0;
     private final int EVENT_TYPE_CALENDAR = 1;
@@ -85,6 +84,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         addSupportedService(RavenConstants.UUID_SERVICE_NAV);
         addSupportedService(RavenConstants.UUID_SERVICE_MUSIC);
         addSupportedService(RavenConstants.UUID_SERVICE_EVENT);
+        addSupportedService(RavenConstants.UUID_SERVICE_INFO);
     }
 
     @Override
@@ -98,14 +98,48 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         onSetTime();  // Time sync
+
+        String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
+
         boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
+
+        builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
 
         builder.add(new SetDeviceStateAction(getDevice(), GBDevice.State.INITIALIZED, getContext()));
         LOG.info("Initialization Done");
 
         builder.requestMtu(512);
         return builder;
+    }
+
+    @Override
+    public boolean onCharacteristicChanged(BluetoothGatt gatt,
+                                           BluetoothGattCharacteristic characteristic) {
+        if (super.onCharacteristicChanged(gatt, characteristic)) {
+            return true;
+        }
+
+        UUID characteristicUUID = characteristic.getUuid();
+        if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET)) {
+            // byte[] value = characteristic.getValue();
+            // If the watch resets but the BLE connection is maintained(support not reset), lastX variables persist and cause issues
+            lastInstruction = "";
+            lastDistance = "";
+            lastETA = "";
+            lastAction = "";
+
+            lastArtist = "";
+            lastTrack = "";
+            lastAlbum = "";
+            lastAlbumArt = null;
+
+            return true;
+        }
+
+        LOG.info("Unhandled characteristic changed: " + characteristicUUID);
+        return false;
     }
 
     @Override
@@ -180,9 +214,9 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         if (!navigationInfoSpec.instruction.equals(lastInstruction)) {
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_INSTRUCTION), navigationInfoSpec.instruction.getBytes(StandardCharsets.UTF_8));
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_INSTRUCTION), truncate(navigationInfoSpec.instruction, InstructionCut).getBytes(StandardCharsets.UTF_8));
             lastInstruction = navigationInfoSpec.instruction;
-        }
+        } else return;  // Avoid sending navigation data if the instruction has not updated(ETA/distance doesn't matter)
         if (!navigationInfoSpec.distanceToTurn.equals(lastDistance)) {
             String dist = navigationInfoSpec.distanceToTurn.replaceAll("\\s+","");
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_DISTANCE), dist.getBytes(StandardCharsets.UTF_8));
@@ -551,11 +585,17 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onSendConfiguration(final String config) {
+        TransactionBuilder builder = new TransactionBuilder("setPref");
         switch (config) {
+            case PREF_RAVEN_WATCHFACE:
+                String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
+                builder.queue(getQueue());
+                return;
             case PREF_DARK_MODE:
-                TransactionBuilder builder = new TransactionBuilder("setPref");
                 boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
                 builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
+                builder.queue(getQueue());
                 return;
         }
 

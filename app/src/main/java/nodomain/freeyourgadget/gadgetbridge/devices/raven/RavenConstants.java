@@ -10,7 +10,8 @@ public final class RavenConstants {
     public static final UUID UUID_CHARACTERISTIC_NOTIFY_TRIGGER = UUID.fromString("684a4964-b6a6-11ef-be87-0800200c9a66");
 
     public static final UUID UUID_SERVICE_PREF = UUID.fromString("bd7711b0-bb11-11ef-9908-0800200c9a66");
-    public static final UUID UUID_CHARACTERISTIC_PREF_SCHEME = UUID.fromString("bd7711b1-bb11-11ef-9908-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_PREF_FACE = UUID.fromString("bd7711b1-bb11-11ef-9908-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_PREF_SCHEME = UUID.fromString("bd7711b2-bb11-11ef-9908-0800200c9a66");
 
     public static final UUID UUID_SERVICE_NAV = UUID.fromString("84d73be0-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_NAV_INSTRUCTION = UUID.fromString("84d73be1-bc48-11ef-9908-0800200c9a66");
@@ -35,4 +36,7 @@ public final class RavenConstants {
     // either alarm repetition or calendar duration
     public static final UUID UUID_CHARACTERISTIC_EVENT_REP_DUR = UUID.fromString("00a970d6-c0db-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_EVENT_TRIGGER = UUID.fromString("00a970d7-c0db-11ef-a8fa-0800200c9a66");
+
+    public static final UUID UUID_SERVICE_INFO = UUID.fromString("b26b80c0-cb1b-11ef-a8fa-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_INFO_RESET = UUID.fromString("b26b80c1-cb1b-11ef-a8fa-0800200c9a66");
 }

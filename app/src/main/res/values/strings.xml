@@ -4327,4 +4327,6 @@
     <string name="pref_darkmode">Dark Mode</string>
     <string name="pref_dark_mode">Dark Mode</string>
     <string name="pref_alarm_sync">Automatic alarm sync</string>
+    <string name="raven_watchface_big">Big</string>
+    <string name="raven_watchface_digital">Digital</string>
 </resources>
