@@ -34,6 +34,7 @@ import java.util.UUID;
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst;
+import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventMusicControl;
 import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenConstants;
 import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
@@ -60,6 +61,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     private final int EVENT_TYPE_ALARM = 0;
     private final int EVENT_TYPE_CALENDAR = 1;
+
+    private final int MUSIC_PLAYPAUSE = 1;
+    private final int MUSIC_NEXT = 2;
+    private final int MUSIC_PREVIOUS = 3;
 
     private final int SCHEME_LIGHT = 0;
     private final int SCHEME_DARK = 1;
@@ -106,6 +111,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
 
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
+        builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC), true);
 
         builder.add(new SetDeviceStateAction(getDevice(), GBDevice.State.INITIALIZED, getContext()));
         LOG.info("Initialization Done");
@@ -122,9 +128,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         UUID characteristicUUID = characteristic.getUuid();
+
+        // If the watch resets but the BLE connection is maintained(support not reset), lastX variables persist and cause issues
         if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET)) {
             // byte[] value = characteristic.getValue();
-            // If the watch resets but the BLE connection is maintained(support not reset), lastX variables persist and cause issues
             lastInstruction = "";
             lastDistance = "";
             lastETA = "";
@@ -134,6 +141,28 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             lastTrack = "";
             lastAlbum = "";
             lastAlbumArt = null;
+
+            return true;
+        }
+        // Music button handling
+        else if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC)) {
+            byte[] value = characteristic.getValue();
+            GBDeviceEventMusicControl deviceEventMusicControl = new GBDeviceEventMusicControl();
+
+            switch (value[0]) {
+                case MUSIC_PLAYPAUSE:
+                    deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.PLAYPAUSE;
+                    break;
+                case MUSIC_NEXT:
+                    deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.NEXT;
+                    break;
+                case MUSIC_PREVIOUS:
+                    deviceEventMusicControl.event = GBDeviceEventMusicControl.Event.PREVIOUS;
+                    break;
+                default:
+                    return false;
+            }
+            evaluateGBDeviceEvent(deviceEventMusicControl);
 
             return true;
         }
