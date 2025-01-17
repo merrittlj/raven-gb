@@ -40,4 +40,7 @@ public final class RavenConstants {
     public static final UUID UUID_SERVICE_INFO = UUID.fromString("b26b80c0-cb1b-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_INFO_RESET = UUID.fromString("b26b80c1-cb1b-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_INFO_MUSIC = UUID.fromString("b26b80c2-cb1b-11ef-a8fa-0800200c9a66");
+
+    public static final UUID UUID_SERVICE_DATA = UUID.fromString("8acaa610-d2a8-11ef-a8fa-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_DATA_WEATHER = UUID.fromString("8acaa611-d2a8-11ef-a8fa-0800200c9a66");
 }

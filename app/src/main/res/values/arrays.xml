@@ -984,11 +984,15 @@
     <string-array name="pref_raven_watchfaces">
         <item>@string/raven_watchface_big</item>
         <item>@string/raven_watchface_digital</item>
+        <item>@string/raven_watchface_arcs</item>
+        <item>@string/raven_watchface_analog</item>
     </string-array>
 
     <string-array name="pref_raven_watchfaces_values">
         <item>big</item>
         <item>digital</item>
+        <item>arcs</item>
+        <item>analog</item>
     </string-array>
 
     <string-array name="pref_zepp_os_watchfaces">

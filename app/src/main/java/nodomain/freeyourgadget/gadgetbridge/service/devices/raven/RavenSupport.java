@@ -44,6 +44,7 @@ import nodomain.freeyourgadget.gadgetbridge.model.MusicSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NavigationInfoSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationType;
+import nodomain.freeyourgadget.gadgetbridge.model.WeatherSpec;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.AbstractBTLEDeviceSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BLETypeConversions;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
@@ -90,6 +91,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         addSupportedService(RavenConstants.UUID_SERVICE_MUSIC);
         addSupportedService(RavenConstants.UUID_SERVICE_EVENT);
         addSupportedService(RavenConstants.UUID_SERVICE_INFO);
+        addSupportedService(RavenConstants.UUID_SERVICE_DATA);
     }
 
     @Override
@@ -102,8 +104,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             getDevice().setFirmwareVersion2("N/A");
         }
 
-        onSetTime();  // Time sync
-
         String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
 
@@ -112,6 +112,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC), true);
+
+        onSetTime();  // Time sync, write AFTER preferences and face
 
         builder.add(new SetDeviceStateAction(getDevice(), GBDevice.State.INITIALIZED, getContext()));
         LOG.info("Initialization Done");
@@ -629,6 +631,19 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         LOG.warn("Unsupported config sender changed: {}", config);
+    }
+
+    @Override
+    public void onSendWeather(ArrayList<WeatherSpec> weatherSpecs) {
+        WeatherSpec weatherSpec = weatherSpecs.get(0);
+        TransactionBuilder builder = new TransactionBuilder("setWeather");
+
+        // We do not need complicated weather data, it is easiest just to send a formatted string
+        // Convert kelvin to fahrenheit, add F, add condition
+        String weather = ((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F " + weatherSpec.currentCondition;
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_DATA_WEATHER), weather.getBytes());
+
+        builder.queue(getQueue());
     }
 
     @Override
