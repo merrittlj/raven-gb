@@ -640,7 +640,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         // We do not need complicated weather data, it is easiest just to send a formatted string
         // Convert kelvin to fahrenheit, add F, add condition
-        String weather = ((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F " + weatherSpec.currentCondition;
+        // String weather = (int)Math.round((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F " + weatherSpec.currentCondition;
+        String weather = (int)Math.round((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F";
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_DATA_WEATHER), weather.getBytes());
 
         builder.queue(getQueue());

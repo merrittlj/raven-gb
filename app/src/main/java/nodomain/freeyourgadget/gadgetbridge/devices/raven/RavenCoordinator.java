@@ -69,6 +69,9 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
+    public boolean supportsWeather() {return true;}
+
+    @Override
     public int[] getSupportedDeviceSpecificSettings(GBDevice device) {
         return new int[] {
                 R.xml.devicesettings_raven_watchface,
