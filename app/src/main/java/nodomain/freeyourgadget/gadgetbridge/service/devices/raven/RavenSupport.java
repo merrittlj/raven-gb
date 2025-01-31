@@ -23,12 +23,15 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.UUID;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
@@ -556,6 +559,38 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         onNotification(callNotif);
     }
 
+    private String repToStr(int rep) {
+        if (rep == Alarm.ALARM_ONCE) return "No rep.";
+        String ret = "Every ";
+        switch (rep) {
+            case Alarm.ALARM_DAILY:
+                ret += "Day";
+                break;
+            case Alarm.ALARM_MON:
+                ret += "Monday";
+                break;
+            case Alarm.ALARM_TUE:
+                ret += "Tuesday";
+                break;
+            case Alarm.ALARM_WED:
+                ret += "Wednesday";
+                break;
+            case Alarm.ALARM_THU:
+                ret += "Thursday";
+                break;
+            case Alarm.ALARM_FRI:
+                ret += "Friday";
+                break;
+            case Alarm.ALARM_SAT:
+                ret += "Saturday";
+                break;
+            case Alarm.ALARM_SUN:
+                ret += "Sunday";
+                break;
+        }
+        return ret;
+    }
+
     @Override
     public void onSetAlarms(ArrayList<? extends Alarm> alarms) {
         if (!getDevicePrefs().getBoolean(PREF_ALARM_SYNC, false)) {
@@ -568,16 +603,37 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             if (a.getUnused() || !a.getEnabled()) continue;
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_ALARM});
             // Alarms do not have IDs within the spec
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{-1});
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{0,0,0,0,0,0,0,0});
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), a.getTitle().getBytes());
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), a.getDescription().getBytes());
-            // TODO: [tests] this needs to be minutes too!! try and use event timestamp format
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) a.getHour()});
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) a.getRepetition()});
+            // timestamp is unix epoch time
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIME), (a.getHour() + ":" + a.getMinute()).getBytes());
+            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), repToStr(a.getRepetition()).getBytes());
 
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{TRIGGER_SET});
         }
         builder.queue(getQueue());
+    }
+
+    private String epochToRelTime(int timestamp) {
+        String ret = "";
+
+        Date setDate = new Date(timestamp);
+        Date now = Calendar.getInstance().getTime();
+        boolean setToday = setDate.getYear() == now.getYear() && setDate.getMonth() == now.getMonth() && setDate.getDay() == now.getDay();
+
+        // If the time is not set for today, prefix the time with the date
+        if (!setToday) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yy", Locale.US);
+            // TODO: do we need timezone here?
+            ret += dateFormat.format(setDate);
+            ret += " ";
+        }
+
+        // Add time
+        ret += setDate.getHours() + ":" + setDate.getMinutes();
+
+        return ret;
     }
 
     @Override
@@ -601,14 +657,25 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         TransactionBuilder builder = new TransactionBuilder("setEventCalendar");
+        ByteBuffer buffer;
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_CALENDAR});
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), new byte[]{(byte) calendarEventSpec.id});  // TODO: might this lose data when converting long -> byte?
+
+        buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(calendarEventSpec.id);
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), buffer.array());
+
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), calendarEventSpec.title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), description.getBytes());
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIMESTAMP), new byte[]{(byte) calendarEventSpec.timestamp});  // TODO: might this lose data?
+
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIME), epochToRelTime(calendarEventSpec.timestamp).getBytes());
+
         // TODO: [tests] does durationInSeconds encompass allDay?
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), new byte[]{(byte) calendarEventSpec.durationInSeconds});  // TODO: might this lose data?
+        String repDur = "";
+        if (calendarEventSpec.durationInSeconds < 60) repDur = calendarEventSpec.durationInSeconds + " Seconds";
+        else if (calendarEventSpec.durationInSeconds < 3600) repDur = (calendarEventSpec.durationInSeconds / 60.0) + " Minutes";
+        else repDur = (calendarEventSpec.durationInSeconds / 3600.0) + " Hours";
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), repDur.getBytes());
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
         builder.queue(getQueue());

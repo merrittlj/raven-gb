@@ -32,7 +32,7 @@ public final class RavenConstants {
     public static final UUID UUID_CHARACTERISTIC_EVENT_ID = UUID.fromString("00a970d2-c0db-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_EVENT_TITLE = UUID.fromString("00a970d3-c0db-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_EVENT_DESC = UUID.fromString("00a970d4-c0db-11ef-a8fa-0800200c9a66");
-    public static final UUID UUID_CHARACTERISTIC_EVENT_TIMESTAMP = UUID.fromString("00a970d5-c0db-11ef-a8fa-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_EVENT_TIME = UUID.fromString("00a970d5-c0db-11ef-a8fa-0800200c9a66");
     // either alarm repetition or calendar duration
     public static final UUID UUID_CHARACTERISTIC_EVENT_REP_DUR = UUID.fromString("00a970d6-c0db-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_EVENT_TRIGGER = UUID.fromString("00a970d7-c0db-11ef-a8fa-0800200c9a66");
