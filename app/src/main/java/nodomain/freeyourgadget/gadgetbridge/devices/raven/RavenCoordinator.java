@@ -64,9 +64,16 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
         return true;
     }
 
+    @Override
     public boolean supportsNavigation() {
         return true;
     }
+
+    @Override
+    public boolean supportsCalendarEvents() { return true; }
+
+    @Override
+    public boolean supportsAlarmTitle(GBDevice device) { return true; }
 
     @Override
     public boolean supportsWeather() {return true;}
