@@ -615,10 +615,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.queue(getQueue());
     }
 
-    private String epochToRelTime(int timestamp) {
+    private String epochToRelTime(long millisTime) {
         String ret = "";
 
-        Date setDate = new Date(timestamp);
+        Date setDate = new Date(millisTime);
         Date now = Calendar.getInstance().getTime();
         boolean setToday = setDate.getYear() == now.getYear() && setDate.getMonth() == now.getMonth() && setDate.getDay() == now.getDay();
 
@@ -631,7 +631,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         // Add time
-        ret += setDate.getHours() + ":" + setDate.getMinutes();
+        ret += (setDate.getHours() < 10 ? "0" : "") + setDate.getHours() + ":" + (setDate.getMinutes() < 10 ? "0" : "") + setDate.getMinutes();
 
         return ret;
     }
@@ -654,7 +654,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             description = description.replaceAll("__________+", "");
             // replace double newlines and trim beginning and end
             description = description.replaceAll("\n\\s*\n","\n").trim();
-        }
+        } else description = "";
 
         TransactionBuilder builder = new TransactionBuilder("setEventCalendar");
         ByteBuffer buffer;
@@ -665,17 +665,26 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         buffer.putLong(calendarEventSpec.id);
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_ID), buffer.array());
 
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), calendarEventSpec.title.getBytes());
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), description.getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), truncate(calendarEventSpec.title, 30).getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), truncate(description, 30).getBytes());
 
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIME), epochToRelTime(calendarEventSpec.timestamp).getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIME), truncate(epochToRelTime(calendarEventSpec.timestamp * 1000), 20).getBytes());
 
         // TODO: [tests] does durationInSeconds encompass allDay?
         String repDur = "";
-        if (calendarEventSpec.durationInSeconds < 60) repDur = calendarEventSpec.durationInSeconds + " Seconds";
-        else if (calendarEventSpec.durationInSeconds < 3600) repDur = (calendarEventSpec.durationInSeconds / 60.0) + " Minutes";
-        else repDur = (calendarEventSpec.durationInSeconds / 3600.0) + " Hours";
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), repDur.getBytes());
+        if (calendarEventSpec.durationInSeconds < 60) {
+            repDur = calendarEventSpec.durationInSeconds + " Seconds";
+            if (calendarEventSpec.durationInSeconds == 1) repDur = repDur.substring(0, repDur.length() - 1);
+        }
+        else if (calendarEventSpec.durationInSeconds < 3600) {
+            repDur = (calendarEventSpec.durationInSeconds / 60) + " Minutes";
+            if (calendarEventSpec.durationInSeconds / 60 == 1) repDur = repDur.substring(0, repDur.length() - 1);
+        }
+        else {
+            repDur = (calendarEventSpec.durationInSeconds / 3600) + " Hours";
+            if (calendarEventSpec.durationInSeconds / 3600 == 1) repDur = repDur.substring(0, repDur.length() - 1);
+        }
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), truncate(repDur, 20).getBytes());
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
         builder.queue(getQueue());
