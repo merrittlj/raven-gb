@@ -4329,4 +4329,5 @@
     <string name="pref_alarm_sync">Automatic alarm sync</string>
     <string name="raven_watchface_big">Big</string>
     <string name="raven_watchface_digital">Digital</string>
+    <string name="pref_raven_hide_music">Hide music track and artist</string>
 </resources>

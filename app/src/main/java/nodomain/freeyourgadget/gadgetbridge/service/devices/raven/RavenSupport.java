@@ -4,6 +4,7 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_ALARM_SYNC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_WATCHFACE;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
 
 import android.bluetooth.BluetoothGatt;
@@ -112,6 +113,9 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
+
+        boolean hidden = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC, false);
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_MUSIC), new byte[]{(byte) (hidden ? 1 : 0)});
 
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC), true);
@@ -480,7 +484,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 final int chunkSize = 511;
                 for (int i = 0; i < Math.ceil((double) bytesCompacted.length / chunkSize); ++i) {
                     int end = Math.min((i + 1) * chunkSize, bytesCompacted.length);
-                    byte[1 + chunkSize] chunk;
+                    byte[] chunk = new byte[1 + chunkSize];
                     System.arraycopy(i, 0, chunk, 0, 1);
                     System.arraycopy(bytesCompacted, (i * chunkSize), chunk, 1, chunkSize);
                     
@@ -650,6 +654,11 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             case PREF_DARK_MODE:
                 boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
                 builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
+                builder.queue(getQueue());
+                return;
+            case PREF_RAVEN_HIDE_MUSIC:
+                boolean hidden = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC, false);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_MUSIC), new byte[]{(byte) (hidden ? 1 : 0)});
                 builder.queue(getQueue());
                 return;
         }

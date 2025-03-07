@@ -44,6 +44,7 @@ public class DeviceSettingsPreferenceConst {
     public static final String PREF_BATTERY_POLLING_INTERVAL = "pref_battery_polling_interval";
 
     public static final String PREF_RAVEN_WATCHFACE = "pref_raven_watchface";
+    public static final String PREF_RAVEN_HIDE_MUSIC = "pref_raven_hide_music";
 
     public static final String PREF_SCREEN_NIGHT_MODE = "pref_screen_night_mode";
     public static final String PREF_SCREEN_SLEEP_MODE = "pref_screen_sleep_mode";

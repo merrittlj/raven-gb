@@ -12,6 +12,7 @@ public final class RavenConstants {
     public static final UUID UUID_SERVICE_PREF = UUID.fromString("bd7711b0-bb11-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_PREF_FACE = UUID.fromString("bd7711b1-bb11-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_PREF_SCHEME = UUID.fromString("bd7711b2-bb11-11ef-9908-0800200c9a66");
+    public static final UUID UUID_CHARACTERISTIC_PREF_MUSIC = UUID.fromString("bd7711b3-bb11-11ef-9908-0800200c9a66");
 
     public static final UUID UUID_SERVICE_NAV = UUID.fromString("84d73be0-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_NAV_INSTRUCTION = UUID.fromString("84d73be1-bc48-11ef-9908-0800200c9a66");
