@@ -318,13 +318,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.queue(getQueue());
     }
 
+    // Not needed but used for testing image processing
     private void saveBitmap(Bitmap imageToSave, String name) {
-        // To be safe, you should check that the SDCard is mounted
-        // using Environment.getExternalStorageState() before doing this.
-//        File mediaStorageDir = new File(Environment.getExternalStorageDirectory()
-//                + "/Android/data/"
-//                + getContext().getPackageName()
-//                + "/Files");
         File mediaStorageDir = new File(
                 Environment.getExternalStoragePublicDirectory(
                         Environment.DIRECTORY_PICTURES
@@ -332,10 +327,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 "GB_DEBUG"
         );
 
-        // This location works best if you want the created images to be shared
-        // between applications and persist after your app has been uninstalled.
-
-        // Create the storage directory if it does not exist
         if (!mediaStorageDir.exists()){
             if (!mediaStorageDir.mkdirs()){
                 return;
@@ -357,25 +348,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private Bitmap simple(Bitmap src)
-    {
-        float threshold = 0.5f;
-
-        Bitmap bwBitmap = Bitmap.createBitmap( src.getWidth(), src.getHeight(), Bitmap.Config.RGB_565 );
-        float[] hsv = new float[ 3 ];
-        for( int col = 0; col < src.getWidth(); col++ ) {
-            for( int row = 0; row < src.getHeight(); row++ ) {
-                Color.colorToHSV( src.getPixel( col, row ), hsv );
-                if( hsv[ 2 ] > threshold ) {
-                    bwBitmap.setPixel( col, row, 0xffffffff );
-                } else {
-                    bwBitmap.setPixel( col, row, 0xff000000 );
-                }
-            }
-        }
-        return bwBitmap;
     }
 
     private Bitmap stucki(Bitmap src)
@@ -429,30 +401,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         return out;
-    }
-
-    private Bitmap byteArrayToBitmap(byte[] byteArray, int width, int height) {
-        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-
-        int pixelIndex = 0; // Index for each pixel in the byte array
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                // Get the byte for the current pixel
-                int byteIndex = pixelIndex / 8; // Each byte represents 8 pixels
-                int bitOffset = pixelIndex % 8; // Bit position within the byte
-
-                // Check the value of the current bit (1 bit per pixel)
-                boolean isWhite = ((byteArray[byteIndex] >> (7 - bitOffset)) & 1) == 1;
-
-                // Set the pixel to white or black based on the bit value
-                int color = isWhite ? Color.WHITE : Color.BLACK;
-                bitmap.setPixel(x, y, color);
-
-                pixelIndex++;
-            }
-        }
-
-        return bitmap;
     }
 
     @Override
@@ -528,18 +476,18 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                     }
                 }
 
-                //Bitmap converted = byteArrayToBitmap(bytesCompacted, 200, 200);
-
-                final int chunkSize = 512;
+                // Write 512-byte chunks with 1 byte index and 511 bytes data
+                final int chunkSize = 511;
                 for (int i = 0; i < Math.ceil((double) bytesCompacted.length / chunkSize); ++i) {
                     int end = Math.min((i + 1) * chunkSize, bytesCompacted.length);
-                    byte[] chunk = Arrays.copyOfRange(bytesCompacted, (i * chunkSize), end);
+                    byte[1 + chunkSize] chunk;
+                    System.arraycopy(i, 0, chunk, 0, 1);
+                    System.arraycopy(bytesCompacted, (i * chunkSize), chunk, 1, chunkSize);
                     
                     builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunk);
                 }
                 lastAlbumArt = musicSpec.albumArt;
             }
-            builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
 
             builder.queue(getQueue());
         } catch (Exception e) {
