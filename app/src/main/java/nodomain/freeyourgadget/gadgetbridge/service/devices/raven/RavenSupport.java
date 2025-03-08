@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
@@ -85,6 +86,9 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     String lastTrack;
     String lastAlbum;
     Bitmap lastAlbumArt;
+    final int chunkDataSize = 240 - 1;
+    byte[][] chunks = new byte[21][240];
+    AtomicInteger chunksIndex = new AtomicInteger(0);
 
     public RavenSupport() {
         super(LOG);
@@ -119,6 +123,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC), true);
+
+        builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY), true);
 
         onSetTime();  // Time sync, write AFTER preferences and face
 
@@ -173,6 +179,11 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             }
             evaluateGBDeviceEvent(deviceEventMusicControl);
 
+            return true;
+        }
+        // Album art chunking handling
+        else if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY)) {
+            sendNextChunk();
             return true;
         }
 
@@ -322,38 +333,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.queue(getQueue());
     }
 
-    // Not needed but used for testing image processing
-    private void saveBitmap(Bitmap imageToSave, String name) {
-        File mediaStorageDir = new File(
-                Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_PICTURES
-                ),
-                "GB_DEBUG"
-        );
-
-        if (!mediaStorageDir.exists()){
-            if (!mediaStorageDir.mkdirs()){
-                return;
-            }
-        }
-        // Create a media file name
-        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmm").format(new Date());
-        File mediaFile;
-        String mImageName="MI_" + timeStamp + "_" + name + ".jpg";
-        mediaFile = new File(mediaStorageDir.getPath() + File.separator + mImageName);
-        if (mediaFile.exists()) {
-            mediaFile.delete();
-        }
-        try {
-            FileOutputStream out = new FileOutputStream(mediaFile);
-            imageToSave.compress(Bitmap.CompressFormat.PNG, 100, out);
-            out.flush();
-            out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     private Bitmap stucki(Bitmap src)
     {
         int threshold = 128;
@@ -407,6 +386,13 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         return out;
     }
 
+    private void sendNextChunk() {
+        TransactionBuilder builder = new TransactionBuilder("setMusicChunk");
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunks[chunksIndex.get()]);
+        chunksIndex.incrementAndGet();
+        builder.queue(getQueue());
+    }
+
     @Override
     public void onSetMusicInfo(MusicSpec musicSpec) {
         // Raven only uses artist, song name, album, and album art
@@ -456,7 +442,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
 
                 Bitmap bwBitmap = stucki(gscaleBitmap);
-                //saveBitmap(bwBitmap, "BW");
 
                 // Convert byte-per-pixel bitmap to bit-per-pixel array
                 byte[] bytesCompacted = new byte[(bwBitmap.getHeight() / 8) * bwBitmap.getWidth()];
@@ -481,14 +466,13 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 }
 
                 // Write 512-byte chunks with 1 byte index and 511 bytes data
-                final int chunkSize = 511;
-                for (int i = 0; i < Math.ceil((double) bytesCompacted.length / chunkSize); ++i) {
-                    int end = Math.min((i + 1) * chunkSize, bytesCompacted.length);
-                    byte[] chunk = new byte[1 + chunkSize];
-                    System.arraycopy(i, 0, chunk, 0, 1);
-                    System.arraycopy(bytesCompacted, (i * chunkSize), chunk, 1, chunkSize);
-                    
-                    builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunk);
+                chunks = new byte[21][240];
+                chunksIndex.set(0);
+                for (int i = 0; i < 21; ++i) {
+                    chunks[i][0] = (byte) i;
+                    int available = bytesCompacted.length - (i * chunkDataSize);
+                    if (available > chunkDataSize) available = chunkDataSize;
+                    System.arraycopy(bytesCompacted, (i * chunkDataSize), chunks[i], 1, available);
                 }
                 lastAlbumArt = musicSpec.albumArt;
             }
