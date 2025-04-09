@@ -984,17 +984,19 @@
     <string-array name="pref_raven_watchfaces">
         <item>@string/raven_watchface_big</item>
         <item>@string/raven_watchface_digital</item>
-        <item>@string/raven_watchface_arcs</item>
         <item>@string/raven_watchface_analog</item>
-        <item>@string/raven_watchface_speed</item>
+        <item>@string/raven_watchface_square_analog</item>
+        <item>@string/raven_watchface_image1</item>
+        <item>@string/raven_watchface_image2</item>
     </string-array>
 
     <string-array name="pref_raven_watchfaces_values">
         <item>big</item>
         <item>digital</item>
-        <item>arcs</item>
         <item>analog</item>
-        <item>speed</item>
+        <item>square_analog</item>
+        <item>image1</item>
+        <item>image2</item>
     </string-array>
 
     <string-array name="pref_zepp_os_watchfaces">
@@ -5269,4 +5271,11 @@
         <item>pound</item>
         <item>stone</item>
     </string-array>
+
+    <string name="raven_watchface_arcs">Arcs</string>
+    <string name="raven_watchface_analog">Analog</string>
+    <string name="raven_watchface_speed">Speed</string>
+    <string name="raven_watchface_image1">Image 1</string>
+    <string name="raven_watchface_image2">Image 2</string>
+    <string name="raven_watchface_square_analog">Square Analog</string>
 </resources>
