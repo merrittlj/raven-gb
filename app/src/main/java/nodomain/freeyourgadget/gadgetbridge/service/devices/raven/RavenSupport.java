@@ -333,53 +333,47 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.queue(getQueue());
     }
 
-    private Bitmap stucki(Bitmap src)
-    {
+    private Bitmap stucki(Bitmap src) {
         int threshold = 128;
-
-        Bitmap out = Bitmap.createBitmap(src.getWidth(), src.getHeight(),src.getConfig());
-
-        int alpha, red;
-        int pixel;
-        int gray;
-
         int width = src.getWidth();
         int height = src.getHeight();
-        int error = 0;
-        int errors[][] = new int[width][height];
-        for (int y = 0; y < height - 2; y++) {
-            for (int x = 2; x < width - 2; x++) {
 
-                pixel = src.getPixel(x, y);
+        Bitmap out = Bitmap.createBitmap(width, height, src.getConfig());
 
-                alpha = Color.alpha(pixel);
-                red = Color.red(pixel);
+        int[][] errors = new int[width][height];
 
-                gray = red;
-                if (gray + errors[x][y] < threshold) {
-                    error = gray + errors[x][y];
-                    gray = 0;
-                } else {
-                    error = gray + errors[x][y] - 255;
-                    gray = 255;
+        // Define the diffusion matrix as {dx, dy, weight}
+        int[][] diffusion = {
+                {1, 0, 8}, {2, 0, 4},
+                {-2, 1, 2}, {-1, 1, 4}, {0, 1, 8}, {1, 1, 4}, {2, 1, 2},
+                {-2, 2, 1}, {-1, 2, 2}, {0, 2, 4}, {1, 2, 2}, {2, 2, 1}
+        };
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pixel = src.getPixel(x, y);
+                int alpha = Color.alpha(pixel);
+
+                // Convert to grayscale using red (assuming grayscale input)
+                int gray = Color.red(pixel);
+                int adjusted = gray + errors[x][y];
+                int newGray = adjusted >= threshold ? 255 : 0;
+                int quantError = adjusted - newGray;
+
+                out.setPixel(x, y, Color.argb(alpha, newGray, newGray, newGray));
+
+                // Distribute the error using the Stucki matrix
+                for (int[] entry : diffusion) {
+                    int dx = entry[0];
+                    int dy = entry[1];
+                    int weight = entry[2];
+                    int nx = x + dx;
+                    int ny = y + dy;
+
+                    if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                        errors[nx][ny] += quantError * weight / 42;
+                    }
                 }
-
-                errors[x + 1][y] += (8 * error) / 42;
-                errors[x + 2][y] += (4 * error) / 42;
-
-                errors[x - 2][y + 1] += (2 * error) / 42;
-                errors[x - 1][y + 1] += (4 * error) / 42;
-                errors[x][y + 1] += (8 * error) / 42;
-                errors[x + 1][y + 1] += (4 * error) / 42;
-                errors[x + 2][y + 1] += (2 * error) / 42;
-
-                errors[x - 2][y + 2] += (1 * error) / 42;
-                errors[x - 1][y + 2] += (2 * error) / 42;
-                errors[x][y + 2] += (4 * error) / 42;
-                errors[x + 1][y + 2] += (2 * error) / 42;
-                errors[x + 2][y + 2] += (1 * error) / 42;
-
-                out.setPixel(x, y, Color.argb(alpha, gray, gray, gray));
             }
         }
 
@@ -439,7 +433,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 cm.setSaturation(0);
                 paint.setColorFilter(new ColorMatrixColorFilter(cm));
                 canvas.drawBitmap(resizedBitmap, 0, 0, paint);
-
 
                 Bitmap bwBitmap = stucki(gscaleBitmap);
 
