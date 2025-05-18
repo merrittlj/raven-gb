@@ -302,7 +302,7 @@ public class GBDeviceService implements DeviceService {
     public void onSetMusicInfo(MusicSpec musicSpec) {
         if (musicSpec.albumArt == null) {
             // Just creating a blank Bitmap is easiest
-            musicSpec.albumArt = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+            musicSpec.albumArt = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
         }
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         musicSpec.albumArt.compress(Bitmap.CompressFormat.PNG, 100, stream);

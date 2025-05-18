@@ -63,6 +63,8 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     private final int NotifyTitleCut = 15;
     private final int NotifyBodyCut = 90;
 
+    private final int MusicCut = 30;
+
     private final int InstructionCut = 40;
 
     private final int EVENT_TYPE_ALARM = 0;
@@ -204,9 +206,32 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.queue(getQueue());
     }
 
-    static String truncate(String str, int cut) {
-        if (str.length() <= cut) return str;
-        return str.substring(0, cut - 1) + ">";
+    public static String truncate(String str, int x) {
+        if (str == null || x <= 0) {
+            return "";
+        }
+
+        byte[] strBytes = str.getBytes(StandardCharsets.UTF_8);
+        if (strBytes.length <= x) {
+            return str;
+        }
+
+        // Account for the '>' character (1 byte in UTF-8)
+        final int maxContentBytes = x - 1;
+        int byteCount = 0;
+        int endIndex = 0;
+
+        for (int i = 0; i < str.length(); i++) {
+            String ch = str.substring(i, i + 1);
+            byte[] chBytes = ch.getBytes(StandardCharsets.UTF_8);
+            if (byteCount + chBytes.length > maxContentBytes) {
+                break;
+            }
+            byteCount += chBytes.length;
+            endIndex = i + 1;
+        }
+
+        return str.substring(0, endIndex) + ">";
     }
 
     @Override
@@ -402,21 +427,30 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             if (musicSpec.album == null) {
                 musicSpec.album = "";
             }
-            if (musicSpec.albumArt == null) {
+            if (musicSpec.albumArt.getWidth() < 200) {
                 musicSpec.albumArt = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
+                musicSpec.albumArt.eraseColor(Color.WHITE);
+
+                lastArtist = "";
+                lastTrack = "";
+                lastAlbum = "";
+                lastAlbumArt = null;
             }
 
             // Track last artist, track, and album to avoid duplicated messages, as Raven does not track other stats no need to update
             if (!musicSpec.artist.equals(lastArtist)) {
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ARTIST), musicSpec.artist.getBytes());
+                String artist = truncate(musicSpec.artist, MusicCut);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ARTIST), artist.getBytes());
                 lastArtist = musicSpec.artist;
             }
             if (!musicSpec.track.equals(lastTrack)) {
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRACK), musicSpec.track.getBytes());
+                String track = truncate(musicSpec.track, MusicCut);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRACK), track.getBytes());
                 lastTrack = musicSpec.track;
             }
             if (!musicSpec.album.equals(lastAlbum)) {
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM), musicSpec.album.getBytes());
+                String album = truncate(musicSpec.album, MusicCut);
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM), album.getBytes());
                 lastAlbum = musicSpec.album;
             }
             if (!musicSpec.albumArt.equals(lastAlbumArt)) {
