@@ -44,13 +44,12 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
 
     @Override
     protected Pattern getSupportedDeviceName() {
-        // TODO: change .* to digit wildcard
-        return Pattern.compile("Raven V.*\\..*");
+        return Pattern.compile("Raven");
     }
 
     @Override
     public int getBondingStyle() {
-        return BONDING_STYLE_ASK;
+        return BONDING_STYLE_NONE;
     }
 
     @Nullable

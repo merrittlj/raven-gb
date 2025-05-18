@@ -79,6 +79,9 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     private final int TRIGGER_SET = 1;
 
+    private final int NEED_DATA = 1;
+    private final int DONE_DATA = 0;
+
     String lastInstruction;
     String lastDistance;
     String lastETA;
@@ -185,7 +188,19 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
         // Album art chunking handling
         else if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY)) {
-            sendNextChunk();
+            byte[] value = characteristic.getValue();
+            switch (value[0]) {
+                case NEED_DATA:
+                    sendNextChunk();
+                    break;
+                case DONE_DATA:
+                    TransactionBuilder builder = new TransactionBuilder("finishMusic");
+                    builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
+                    builder.queue(getQueue());
+                    break;
+                default:
+                    return false;
+            }
             return true;
         }
 
@@ -412,6 +427,11 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.queue(getQueue());
     }
 
+    private void sendNextChunk(TransactionBuilder builder) {
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunks[chunksIndex.get()]);
+        chunksIndex.incrementAndGet();
+    }
+
     @Override
     public void onSetMusicInfo(MusicSpec musicSpec) {
         // Raven only uses artist, song name, album, and album art
@@ -502,8 +522,12 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                     System.arraycopy(bytesCompacted, (i * chunkDataSize), chunks[i], 1, available);
                 }
                 lastAlbumArt = musicSpec.albumArt;
+
+                sendNextChunk(builder);
             }
 
+            // Remove this trigger when using album art
+            //builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
             builder.queue(getQueue());
         } catch (Exception e) {
             LOG.error("Error sending music info", e);
