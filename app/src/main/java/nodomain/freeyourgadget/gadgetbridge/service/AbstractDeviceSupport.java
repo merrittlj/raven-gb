@@ -133,7 +133,7 @@ public abstract class AbstractDeviceSupport implements DeviceSupport {
     }
 
     @Override
-    public Context getContext() {
+    public static Context getContext() {
         return context;
     }
 

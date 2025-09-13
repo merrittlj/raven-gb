@@ -703,6 +703,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
 
         addPreferenceHandlerFor(PREF_DARK_MODE);
 
+        addPreferenceHandlerFor(PREF_RAVEN_IMAGE_UPLOAD);
         addPreferenceHandlerFor(PREF_RAVEN_WATCHFACE);
 
         addPreferenceHandlerFor(PREF_ACTIVE_NOISE_CANCELLING_TOGGLE);

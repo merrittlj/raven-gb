@@ -3,6 +3,7 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_ALARM_SYNC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_IMAGE_UPLOAD;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_WATCHFACE;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
@@ -15,20 +16,16 @@ import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
-import android.os.Environment;
 
 import androidx.core.text.HtmlCompat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -685,6 +682,17 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
                 builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
                 builder.queue(getQueue());
+                return;
+            case PREF_RAVEN_IMAGE_UPLOAD:
+                OneShotImagePicker.pickImage(getContext(), bitmap -> {
+                    // Re-use music image upload instead of refactoring everything ;)
+                    MusicSpec fakeAlbumArt = new MusicSpec();
+                    fakeAlbumArt.artist = "";
+                    fakeAlbumArt.track = "";
+                    fakeAlbumArt.album = "";
+                    fakeAlbumArt.albumArt = bitmap;
+                    onSetMusicInfo(fakeAlbumArt);
+                });
                 return;
             case PREF_DARK_MODE:
                 boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);

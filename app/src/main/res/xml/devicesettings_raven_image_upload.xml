@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <Preference
+        android:icon="@drawable/ic_invert_colors"
+        android:key="pref_raven_image_upload"
+        android:title="@string/pref_raven_image_upload"/>
+</androidx.preference.PreferenceScreen>
