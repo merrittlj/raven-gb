@@ -980,6 +980,7 @@
     <string-array name="vibration_intensity_values">
         <item>normal</item>
         <item>enhanced</item>
+    </string-array>
 
     <string-array name="pref_raven_watchfaces">
         <item>@string/raven_watchface_big</item>
@@ -5271,11 +5272,4 @@
         <item>pound</item>
         <item>stone</item>
     </string-array>
-
-    <string name="raven_watchface_arcs">Arcs</string>
-    <string name="raven_watchface_analog">Analog</string>
-    <string name="raven_watchface_speed">Speed</string>
-    <string name="raven_watchface_image1">Image 1</string>
-    <string name="raven_watchface_image2">Image 2</string>
-    <string name="raven_watchface_square_analog">Square Analog</string>
 </resources>
