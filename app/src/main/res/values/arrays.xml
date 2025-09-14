@@ -1191,7 +1191,7 @@
         <item>zepp_flow</item>
         <!-- dummy item -->
         <item>more</item>
-    </string-array>N
+    </string-array>
 
     <string-array name="pref_zepp_os_shortcut_cards">
         <item>@string/menuitem_weather</item>

@@ -25,11 +25,6 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     public int getDefaultIconResource() {
         return R.drawable.ic_device_raven;
     }
-
-    @Override
-    public int getDisabledIconResource() {
-        return R.drawable.ic_device_raven_disabled;
-    }
     
     @Override
     public String getManufacturer() {
@@ -38,7 +33,7 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
 
     @NonNull
     @Override
-    public Class<? extends DeviceSupport> getDeviceSupportClass() {
+    public Class<? extends DeviceSupport> getDeviceSupportClass(final GBDevice device) {
         return RavenSupport.class;
     }
 
@@ -59,23 +54,23 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
     }
 
     @Override
-    public boolean supportsMusicInfo() {
+    public boolean supportsMusicInfo(@NonNull GBDevice device) {
         return true;
     }
 
     @Override
-    public boolean supportsNavigation() {
+    public boolean supportsNavigation(@NonNull GBDevice device) {
         return true;
     }
 
     @Override
-    public boolean supportsCalendarEvents() { return true; }
+    public boolean supportsCalendarEvents(@NonNull GBDevice device) { return true; }
 
     @Override
     public boolean supportsAlarmTitle(GBDevice device) { return true; }
 
     @Override
-    public boolean supportsWeather() {return true;}
+    public boolean supportsWeather(@NonNull GBDevice device) {return true;}
 
     @Override
     public int[] getSupportedDeviceSpecificSettings(GBDevice device) {
@@ -85,7 +80,6 @@ public class RavenCoordinator extends AbstractBLEDeviceCoordinator {
                 R.xml.devicesettings_darkmode,
                 R.xml.devicesettings_prefix_notification_with_app,
                 R.xml.devicesettings_sync_calendar,
-                R.xml.devicesettings_alarm_sync
         };
     }
 

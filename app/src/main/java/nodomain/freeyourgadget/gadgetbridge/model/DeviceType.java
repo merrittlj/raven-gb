@@ -317,12 +317,9 @@ import nodomain.freeyourgadget.gadgetbridge.devices.polar.PolarH10DeviceCoordina
 import nodomain.freeyourgadget.gadgetbridge.devices.polar.PolarH9DeviceCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.qc35.QC35Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.qhybrid.QHybridCoordinator;
-<<<<<<< HEAD
 import nodomain.freeyourgadget.gadgetbridge.devices.realme.RealmeBudsAir5ProCoordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.realme.RealmeBudsT100Coordinator;
-=======
 import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenCoordinator;
->>>>>>> 9f28f1c8d (Basic Raven discovery and NixOS additions)
 import nodomain.freeyourgadget.gadgetbridge.devices.realme.RealmeBudsT110Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.realme.RealmeBudsT300Coordinator;
 import nodomain.freeyourgadget.gadgetbridge.devices.redmibuds.RedmiBuds3ProCoordinator;

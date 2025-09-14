@@ -1,7 +1,6 @@
 package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 
 
-import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_ALARM_SYNC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_IMAGE_UPLOAD;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_WATCHFACE;
@@ -17,6 +16,7 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 
+import androidx.annotation.NonNull;
 import androidx.core.text.HtmlCompat;
 
 import org.slf4j.Logger;
@@ -30,6 +30,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -47,14 +48,15 @@ import nodomain.freeyourgadget.gadgetbridge.model.NavigationInfoSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.NotificationType;
 import nodomain.freeyourgadget.gadgetbridge.model.WeatherSpec;
-import nodomain.freeyourgadget.gadgetbridge.service.btle.AbstractBTLEDeviceSupport;
+import nodomain.freeyourgadget.gadgetbridge.model.weather.Weather;
+import nodomain.freeyourgadget.gadgetbridge.service.btle.AbstractBTLESingleDeviceSupport;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.BLETypeConversions;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattCharacteristic;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.GattService;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.TransactionBuilder;
 import nodomain.freeyourgadget.gadgetbridge.service.btle.actions.SetDeviceStateAction;
 
-public class RavenSupport extends AbstractBTLEDeviceSupport {
+public class RavenSupport extends AbstractBTLESingleDeviceSupport {
     private static final Logger LOG = LoggerFactory.getLogger(RavenSupport.class);
     private final int NotifySourceCut = 15;
     private final int NotifyTitleCut = 15;
@@ -115,13 +117,14 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
+        assert face != null;
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
 
         boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), (byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT));
 
         boolean hidden = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC, false);
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_MUSIC), new byte[]{(byte) (hidden ? 1 : 0)});
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_MUSIC), (byte) (hidden ? 1 : 0));
 
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC), true);
@@ -139,8 +142,9 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     @Override
     public boolean onCharacteristicChanged(BluetoothGatt gatt,
-                                           BluetoothGattCharacteristic characteristic) {
-        if (super.onCharacteristicChanged(gatt, characteristic)) {
+                                           BluetoothGattCharacteristic characteristic,
+                                           byte[] value) {
+        if (super.onCharacteristicChanged(gatt, characteristic, value)) {
             return true;
         }
 
@@ -148,7 +152,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
         // If the watch resets but the BLE connection is maintained(support not reset), lastX variables persist and cause issues
         if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET)) {
-            // byte[] value = characteristic.getValue();
             lastInstruction = "";
             lastDistance = "";
             lastETA = "";
@@ -163,7 +166,6 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
         // Music button handling
         else if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC)) {
-            byte[] value = characteristic.getValue();
             GBDeviceEventMusicControl deviceEventMusicControl = new GBDeviceEventMusicControl();
 
             switch (value[0]) {
@@ -185,15 +187,14 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
         // Album art chunking handling
         else if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY)) {
-            byte[] value = characteristic.getValue();
             switch (value[0]) {
                 case NEED_DATA:
                     sendNextChunk();
                     break;
                 case DONE_DATA:
-                    TransactionBuilder builder = new TransactionBuilder("finishMusic");
+                    TransactionBuilder builder = createTransactionBuilder("finishMusic");
                     builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
-                    builder.queue(getQueue());
+                    builder.queue();
                     break;
                 default:
                     return false;
@@ -201,7 +202,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             return true;
         }
 
-        LOG.info("Unhandled characteristic changed: " + characteristicUUID);
+        LOG.info("Unhandled characteristic changed: {}", characteristicUUID);
         return false;
     }
 
@@ -212,10 +213,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         byte[] bytesCurrentTime = BLETypeConversions.calendarToCurrentTime(now, 0);
         byte[] bytesLocalTime = BLETypeConversions.calendarToLocalTime(now);
 
-        TransactionBuilder builder = new TransactionBuilder("setTime");
+        TransactionBuilder builder = createTransactionBuilder("setTime");
         builder.write(getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_CURRENT_TIME), bytesCurrentTime);
         builder.write(getCharacteristic(GattCharacteristic.UUID_CHARACTERISTIC_LOCAL_TIME), bytesLocalTime);
-        builder.queue(getQueue());
+        builder.queue();
     }
 
     public static String truncate(String str, int x) {
@@ -274,12 +275,12 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         title = truncate(title, titleCut);
         body = truncate(body, NotifyBodyCut);
 
-        TransactionBuilder builder = new TransactionBuilder("setNotify");
+        TransactionBuilder builder = createTransactionBuilder("setNotify");
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_SOURCE), source.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TITLE), title.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_BODY), body.getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NOTIFY_TRIGGER), new byte[]{TRIGGER_SET});
-        builder.queue(getQueue());
+        builder.queue();
     }
 
     @Override
@@ -288,7 +289,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         // spec.distanceToTurn(String): ex - "0.2 mi"
         // spec.ETA(String): ex - "5 min"
         // spec.nextAction(int): ex - ACTION_TURN_LEFT - "next" is confusing, this is the action to be displayed
-        TransactionBuilder builder = new TransactionBuilder("setNav");
+        TransactionBuilder builder = createTransactionBuilder("setNav");
         if (navigationInfoSpec.instruction == null) {
             navigationInfoSpec.instruction = "";
         }
@@ -313,53 +314,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             lastETA = navigationInfoSpec.ETA;
         }
 
-        String action;
-        // This is PineTime's protocol, but it is a solid implementation
-        switch (navigationInfoSpec.nextAction) {
-            case NavigationInfoSpec.ACTION_CONTINUE:
-                action = "continue";
-                break;
-            case NavigationInfoSpec.ACTION_TURN_LEFT:
-                action = "turn-left";
-                break;
-            case NavigationInfoSpec.ACTION_TURN_LEFT_SLIGHTLY:
-                action = "turn-slight-left";
-                break;
-            case NavigationInfoSpec.ACTION_TURN_LEFT_SHARPLY:
-                action = "turn-sharp-left";
-                break;
-            case NavigationInfoSpec.ACTION_TURN_RIGHT:
-                action = "turn-right";
-                break;
-            case NavigationInfoSpec.ACTION_TURN_RIGHT_SLIGHTLY:
-                action = "turn-slight-right";
-                break;
-            case NavigationInfoSpec.ACTION_TURN_RIGHT_SHARPLY:
-                action = "turn-sharp-right";
-                break;
-            case NavigationInfoSpec.ACTION_KEEP_LEFT:
-                action = "continue-left";
-                break;
-            case NavigationInfoSpec.ACTION_KEEP_RIGHT:
-                action = "continue-right";
-                break;
-            case NavigationInfoSpec.ACTION_UTURN_LEFT:
-            case NavigationInfoSpec.ACTION_UTURN_RIGHT:
-                action = "uturn";
-                break;
-            case NavigationInfoSpec.ACTION_ROUNDABOUT_RIGHT:
-                action = "roundabout-right";
-                break;
-            case NavigationInfoSpec.ACTION_ROUNDABOUT_LEFT:
-                action = "roundabout-left";
-                break;
-            case NavigationInfoSpec.ACTION_OFFROUTE:
-                action = "close";
-                break;
-            default:
-                action = "flag";
-                break;
-        }
+        String action = getString(navigationInfoSpec);
 
         if (!action.equals(lastAction)) {
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_ACTION), action.getBytes(StandardCharsets.UTF_8));
@@ -367,7 +322,30 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         }
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_NAV_TRIGGER), new byte[]{TRIGGER_SET});
-        builder.queue(getQueue());
+        builder.queue();
+    }
+
+    @NonNull
+    private static String getString(NavigationInfoSpec navigationInfoSpec) {
+        String action;
+        // This is PineTime's protocol, but it is a solid implementation
+        switch (navigationInfoSpec.nextAction) {
+            case NavigationInfoSpec.ACTION_CONTINUE -> action = "continue";
+            case NavigationInfoSpec.ACTION_TURN_LEFT -> action = "turn-left";
+            case NavigationInfoSpec.ACTION_TURN_LEFT_SLIGHTLY -> action = "turn-slight-left";
+            case NavigationInfoSpec.ACTION_TURN_LEFT_SHARPLY -> action = "turn-sharp-left";
+            case NavigationInfoSpec.ACTION_TURN_RIGHT -> action = "turn-right";
+            case NavigationInfoSpec.ACTION_TURN_RIGHT_SLIGHTLY -> action = "turn-slight-right";
+            case NavigationInfoSpec.ACTION_TURN_RIGHT_SHARPLY -> action = "turn-sharp-right";
+            case NavigationInfoSpec.ACTION_KEEP_LEFT -> action = "continue-left";
+            case NavigationInfoSpec.ACTION_KEEP_RIGHT -> action = "continue-right";
+            case NavigationInfoSpec.ACTION_UTURN_LEFT, NavigationInfoSpec.ACTION_UTURN_RIGHT -> action = "uturn";
+            case NavigationInfoSpec.ACTION_ROUNDABOUT_RIGHT -> action = "roundabout-right";
+            case NavigationInfoSpec.ACTION_ROUNDABOUT_LEFT -> action = "roundabout-left";
+            case NavigationInfoSpec.ACTION_OFFROUTE -> action = "close";
+            default -> action = "flag";
+        }
+        return action;
     }
 
     private Bitmap stucki(Bitmap src) {
@@ -375,7 +353,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         int width = src.getWidth();
         int height = src.getHeight();
 
-        Bitmap out = Bitmap.createBitmap(width, height, src.getConfig());
+        Bitmap out = Bitmap.createBitmap(width, height, Objects.requireNonNull(src.getConfig()));
 
         int[][] errors = new int[width][height];
 
@@ -418,10 +396,10 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     }
 
     private void sendNextChunk() {
-        TransactionBuilder builder = new TransactionBuilder("setMusicChunk");
+        TransactionBuilder builder = createTransactionBuilder("setMusicChunk");
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunks[chunksIndex.get()]);
         chunksIndex.incrementAndGet();
-        builder.queue(getQueue());
+        builder.queue();
     }
 
     private void sendNextChunk(TransactionBuilder builder) {
@@ -504,7 +482,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
                         // Set the corresponding bit in the byte
                         if (binaryValue == 1) {
-                            bytesCompacted[byteIndex] |= (1 << (7 - bitIndex)); // Set the bit at the correct position
+                            bytesCompacted[byteIndex] |= (byte) (1 << (7 - bitIndex)); // Set the bit at the correct position
                         }
                     }
                 }
@@ -525,7 +503,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
             // Remove this trigger when using album art
             //builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
-            builder.queue(getQueue());
+            builder.queue();
         } catch (Exception e) {
             LOG.error("Error sending music info", e);
         }
@@ -577,12 +555,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
     @Override
     public void onSetAlarms(ArrayList<? extends Alarm> alarms) {
-        if (!getDevicePrefs().getBoolean(PREF_ALARM_SYNC, false)) {
-            LOG.info("Ignoring add alarms {}, sync is disabled", alarms);
-            return;
-        }
-
-        TransactionBuilder builder = new TransactionBuilder("setEventAlarm");
+        TransactionBuilder builder = createTransactionBuilder("setEventAlarm");
         for (Alarm a : alarms) {
             if (a.getUnused() || !a.getEnabled()) continue;
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_ALARM});
@@ -596,7 +569,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
 
             builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{TRIGGER_SET});
         }
-        builder.queue(getQueue());
+        builder.queue();
     }
 
     private String epochToRelTime(long millisTime) {
@@ -640,7 +613,7 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             description = description.replaceAll("\n\\s*\n","\n").trim();
         } else description = "";
 
-        TransactionBuilder builder = new TransactionBuilder("setEventCalendar");
+        TransactionBuilder builder = createTransactionBuilder("setEventCalendar");
         ByteBuffer buffer;
 
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TYPE), new byte[]{EVENT_TYPE_CALENDAR});
@@ -652,10 +625,19 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TITLE), truncate(calendarEventSpec.title, 30).getBytes());
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_DESC), truncate(description, 30).getBytes());
 
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIME), truncate(epochToRelTime(calendarEventSpec.timestamp * 1000), 20).getBytes());
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TIME), truncate(epochToRelTime(calendarEventSpec.timestamp * 1000L), 20).getBytes());
 
         // TODO: [tests] does durationInSeconds encompass allDay?
-        String repDur = "";
+        String repDur = getString(calendarEventSpec);
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), truncate(repDur, 20).getBytes());
+
+        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
+        builder.queue();
+    }
+
+    @NonNull
+    private static String getString(CalendarEventSpec calendarEventSpec) {
+        String repDur;
         if (calendarEventSpec.durationInSeconds < 60) {
             repDur = calendarEventSpec.durationInSeconds + " Seconds";
             if (calendarEventSpec.durationInSeconds == 1) repDur = repDur.substring(0, repDur.length() - 1);
@@ -668,20 +650,18 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
             repDur = (calendarEventSpec.durationInSeconds / 3600) + " Hours";
             if (calendarEventSpec.durationInSeconds / 3600 == 1) repDur = repDur.substring(0, repDur.length() - 1);
         }
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_REP_DUR), truncate(repDur, 20).getBytes());
-
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_EVENT_TRIGGER), new byte[]{1});
-        builder.queue(getQueue());
+        return repDur;
     }
 
     @Override
     public void onSendConfiguration(final String config) {
-        TransactionBuilder builder = new TransactionBuilder("setPref");
+        TransactionBuilder builder = createTransactionBuilder("setPref");
         switch (config) {
             case PREF_RAVEN_WATCHFACE:
                 String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
+                assert face != null;
                 builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
-                builder.queue(getQueue());
+                builder.queue();
                 return;
             case PREF_RAVEN_IMAGE_UPLOAD:
                 OneShotImagePicker.pickImage(getContext(), bitmap -> {
@@ -696,13 +676,13 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
                 return;
             case PREF_DARK_MODE:
                 boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), new byte[]{(byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT)});
-                builder.queue(getQueue());
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_SCHEME), (byte) (scheme ? SCHEME_DARK : SCHEME_LIGHT));
+                builder.queue();
                 return;
             case PREF_RAVEN_HIDE_MUSIC:
                 boolean hidden = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC, false);
-                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_MUSIC), new byte[]{(byte) (hidden ? 1 : 0)});
-                builder.queue(getQueue());
+                builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_MUSIC), (byte) (hidden ? 1 : 0));
+                builder.queue();
                 return;
         }
 
@@ -710,17 +690,18 @@ public class RavenSupport extends AbstractBTLEDeviceSupport {
     }
 
     @Override
-    public void onSendWeather(ArrayList<WeatherSpec> weatherSpecs) {
-        WeatherSpec weatherSpec = weatherSpecs.get(0);
-        TransactionBuilder builder = new TransactionBuilder("setWeather");
+    public void onSendWeather() {
+        WeatherSpec weatherSpec = Weather.getWeatherSpec();
+        TransactionBuilder builder = createTransactionBuilder("setWeather");
 
         // We do not need complicated weather data, it is easiest just to send a formatted string
         // Convert kelvin to fahrenheit, add F, add condition
         // String weather = (int)Math.round((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F " + weatherSpec.currentCondition;
-        String weather = (int)Math.round((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F";
+        assert weatherSpec != null;
+        String weather = (int)Math.round((weatherSpec.getCurrentTemp() - 273.15) * (9.0/5.0) + 32) + "F";
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_DATA_WEATHER), weather.getBytes());
 
-        builder.queue(getQueue());
+        builder.queue();
     }
 
     @Override

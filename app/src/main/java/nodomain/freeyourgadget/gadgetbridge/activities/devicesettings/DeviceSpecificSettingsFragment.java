@@ -688,8 +688,6 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
         addPreferenceHandlerFor(PREF_BATTERY_POLLING_INTERVAL);
         addPreferenceHandlerFor(PREF_TIME_SYNC);
 
-        addPreferenceHandlerFor(PREF_ALARM_SYNC);
-
         addPreferenceHandlerFor(PREF_BLUETOOTH_CALLS_ENABLED);
         addPreferenceHandlerFor(PREF_DISPLAY_CALLER);
         addPreferenceHandlerFor(PREF_NOTIFICATION_DELAY_CALLS);
@@ -705,6 +703,7 @@ public class DeviceSpecificSettingsFragment extends AbstractPreferenceFragment i
 
         addPreferenceHandlerFor(PREF_RAVEN_IMAGE_UPLOAD);
         addPreferenceHandlerFor(PREF_RAVEN_WATCHFACE);
+        addPreferenceHandlerFor(PREF_RAVEN_HIDE_MUSIC);
 
         addPreferenceHandlerFor(PREF_ACTIVE_NOISE_CANCELLING_TOGGLE);
         addPreferenceHandlerFor(PREF_NOISE_CONTROL_SELECTOR);
