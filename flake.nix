@@ -2,10 +2,10 @@
   description = "Raven Gadgetbridge - Android Environment";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     devshell.url = "github:numtide/devshell";
     flake-utils.url = "github:numtide/flake-utils";
-    android.url = "github:tadfisher/android-nixpkgs";
+    android.url = "github:tadfisher/android-nixpkgs/canary";
   };
 
   outputs = { self, nixpkgs, devshell, flake-utils, android }:
@@ -15,7 +15,7 @@
       };
     }
     //
-    flake-utils.lib.eachSystem [ "aarch64-darwin" "x86_64-darwin" "x86_64-linux" ] (system:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         inherit (nixpkgs) lib;
         pkgs = import nixpkgs {
@@ -31,11 +31,11 @@
         packages = {
           android-sdk = android.sdk.${system} (sdkPkgs: with sdkPkgs; [
             # Useful packages for building and testing.
-            build-tools-34-0-0
+            build-tools-36-0-0
             cmdline-tools-latest
             emulator
             platform-tools
-            platforms-android-34
+            platforms-android-36
 
             # Other useful packages for a development environment.
             # ndk-26-1-10909125
@@ -52,7 +52,7 @@
           ]);
         } // lib.optionalAttrs (system == "x86_64-linux") {
           # Android Studio in nixpkgs is currently packaged for x86_64-linux only.
-          android-studio = pkgs.androidStudioPackages.stable;
+          android-studio = pkgs.androidStudioPackages.canary;
           # android-studio = pkgs.androidStudioPackages.beta;
           # android-studio = pkgs.androidStudioPackages.preview;
           # android-studio = pkgs.androidStudioPackage.canary;
