@@ -3,16 +3,21 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageDecoder;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
+import android.view.ViewGroup;
 
 import java.io.IOException;
 
 public class OneShotImagePicker {
-
+    private static int SELECT_PHOTO = 1001;
     public interface BitmapCallback {
         void onBitmapReady(Bitmap bitmap);
     }
@@ -42,28 +47,32 @@ public class OneShotImagePicker {
             super.onStart();
             Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             intent.setType("image/*");
-            startActivityForResult(intent, 1);
+            startActivityForResult(intent, SELECT_PHOTO);
         }
 
         @Override
-        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-            super.onActivityResult(requestCode, resultCode, data);
-            if (resultCode == RESULT_OK && data != null && bitmapCallback != null) {
-                Uri uri = data.getData();
-                try {
-                    Bitmap bitmap;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
-                        bitmap = ImageDecoder.decodeBitmap(source);
-                    } else {
-                        bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                    }
-                    bitmapCallback.onBitmapReady(bitmap);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+            super.onActivityResult(requestCode, resultCode, intent);
+            if (requestCode == SELECT_PHOTO && resultCode == RESULT_OK && intent != null && bitmapCallback != null) {
+                Uri uri = intent.getData();
+
+                // Let's read picked image path using content resolver
+                String[] filePath = { MediaStore.Images.Media.DATA };
+                Cursor cursor = getContentResolver().query(uri, filePath, null, null, null);
+                cursor.moveToFirst();
+                int columnIndex = cursor.getColumnIndex(filePath[0]);
+                if (columnIndex == -1) return;
+                String imagePath = cursor.getString(columnIndex);
+
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+                Bitmap bitmap = BitmapFactory.decodeFile(imagePath, options);
+
+                bitmapCallback.onBitmapReady(bitmap);
+
+                cursor.close();
             }
-            finish(); // close invisible activity
+            finish();
         }
     }
 }

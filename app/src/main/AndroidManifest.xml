@@ -1018,6 +1018,12 @@
             android:name=".devices.cycling_sensor.activity.CyclingLiveDataActivity"
             android:launchMode="singleInstance"
             android:exported="true" />
+
+        <activity
+            android:name=".service.devices.raven.OneShotImagePicker$InvisiblePickerActivity"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:finishOnTaskLaunch="true"/>
     </application>
 
 </manifest>

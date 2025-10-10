@@ -2,9 +2,9 @@ package nodomain.freeyourgadget.gadgetbridge.service.devices.raven;
 
 
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_DARK_MODE;
+import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_IMAGE_UPLOAD;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_WATCHFACE;
-import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_RAVEN_HIDE_MUSIC;
 import static nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst.PREF_SYNC_CALENDAR;
 
 import android.bluetooth.BluetoothGatt;
@@ -38,8 +38,8 @@ import nodomain.freeyourgadget.gadgetbridge.GBApplication;
 import nodomain.freeyourgadget.gadgetbridge.R;
 import nodomain.freeyourgadget.gadgetbridge.activities.devicesettings.DeviceSettingsPreferenceConst;
 import nodomain.freeyourgadget.gadgetbridge.deviceevents.GBDeviceEventMusicControl;
-import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.devices.raven.RavenConstants;
+import nodomain.freeyourgadget.gadgetbridge.impl.GBDevice;
 import nodomain.freeyourgadget.gadgetbridge.model.Alarm;
 import nodomain.freeyourgadget.gadgetbridge.model.CalendarEventSpec;
 import nodomain.freeyourgadget.gadgetbridge.model.CallSpec;
@@ -116,8 +116,7 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
             getDevice().setFirmwareVersion2("N/A");
         }
 
-        String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
-        assert face != null;
+        String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, "big");
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
 
         boolean scheme = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getBoolean(DeviceSettingsPreferenceConst.PREF_DARK_MODE, false);
@@ -658,8 +657,7 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
         TransactionBuilder builder = createTransactionBuilder("setPref");
         switch (config) {
             case PREF_RAVEN_WATCHFACE:
-                String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, null);
-                assert face != null;
+                String face = GBApplication.getDeviceSpecificSharedPrefs(gbDevice.getAddress()).getString(PREF_RAVEN_WATCHFACE, "big");
                 builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_PREF_FACE), face.getBytes());
                 builder.queue();
                 return;
@@ -697,7 +695,7 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
         // We do not need complicated weather data, it is easiest just to send a formatted string
         // Convert kelvin to fahrenheit, add F, add condition
         // String weather = (int)Math.round((weatherSpec.currentTemp - 273.15) * (9/5) + 32) + "F " + weatherSpec.currentCondition;
-        assert weatherSpec != null;
+        if (weatherSpec == null) return;
         String weather = (int)Math.round((weatherSpec.getCurrentTemp() - 273.15) * (9.0/5.0) + 32) + "F";
         builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_DATA_WEATHER), weather.getBytes());
 

@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <Preference
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
         android:icon="@drawable/ic_invert_colors"
         android:key="pref_raven_image_upload"
+        android:layout="@layout/preference_checkbox"
         android:title="@string/pref_raven_image_upload"/>
 </androidx.preference.PreferenceScreen>
