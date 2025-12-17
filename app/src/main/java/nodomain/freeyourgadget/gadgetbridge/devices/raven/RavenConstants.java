@@ -27,7 +27,10 @@ public final class RavenConstants {
     public static final UUID UUID_CHARACTERISTIC_MUSIC_ALBUM = UUID.fromString("982fc773-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_MUSIC_ALBUM_ART = UUID.fromString("982fc774-bc48-11ef-9908-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_MUSIC_READY = UUID.fromString("982fc775-bc48-11ef-9908-0800200c9a66");
-    public static final UUID UUID_CHARACTERISTIC_MUSIC_TRIGGER = UUID.fromString("982fc776-bc48-11ef-9908-0800200c9a66");
+
+    public static final UUID UUID_SERVICE_CUSTOM_IMAGE = UUID.fromString("30cfc23b-55f0-412b-b3bc-2533dbf8e28e");
+    public static final UUID UUID_CHARACTERISTIC_CUSTOM_IMAGE_DATA = UUID.fromString("30cfc23b-56f0-412b-b3bc-2533dbf8e28e");
+    public static final UUID UUID_CHARACTERISTIC_CUSTOM_IMAGE_READY = UUID.fromString("30cfc23b-57f0-412b-b3bc-2533dbf8e28e");
 
     public static final UUID UUID_SERVICE_EVENT = UUID.fromString("00a970d0-c0db-11ef-a8fa-0800200c9a66");
     public static final UUID UUID_CHARACTERISTIC_EVENT_TYPE = UUID.fromString("00a970d1-c0db-11ef-a8fa-0800200c9a66");

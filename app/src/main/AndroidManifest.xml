@@ -1020,10 +1020,9 @@
             android:exported="true" />
 
         <activity
-            android:name=".service.devices.raven.OneShotImagePicker$InvisiblePickerActivity"
-            android:excludeFromRecents="true"
-            android:launchMode="singleInstance"
-            android:finishOnTaskLaunch="true"/>
+            android:name="nodomain.freeyourgadget.gadgetbridge.service.devices.raven.OneShotImagePicker$InvisiblePickerActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:exported="false" />
     </application>
 
 </manifest>

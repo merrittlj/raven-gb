@@ -90,9 +90,16 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
     String lastTrack;
     String lastAlbum;
     Bitmap lastAlbumArt;
+
     final int chunkDataSize = 240 - 1;
-    byte[][] chunks = new byte[21][240];
-    AtomicInteger chunksIndex = new AtomicInteger(0);
+    class ImageChunks {
+        byte[][] chunks = new byte[21][240];
+        AtomicInteger chunkIndex = new AtomicInteger(0);
+        UUID uuid_image;
+        UUID uuid_ready;
+    }
+    ImageChunks musicChunks = new ImageChunks();
+    ImageChunks customImageChunks = new ImageChunks();
 
     public RavenSupport() {
         super(LOG);
@@ -101,6 +108,7 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
         addSupportedService(RavenConstants.UUID_SERVICE_PREF);
         addSupportedService(RavenConstants.UUID_SERVICE_NAV);
         addSupportedService(RavenConstants.UUID_SERVICE_MUSIC);
+        addSupportedService(RavenConstants.UUID_SERVICE_CUSTOM_IMAGE);
         addSupportedService(RavenConstants.UUID_SERVICE_EVENT);
         addSupportedService(RavenConstants.UUID_SERVICE_INFO);
         addSupportedService(RavenConstants.UUID_SERVICE_DATA);
@@ -128,7 +136,13 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_RESET), true);
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_INFO_MUSIC), true);
 
+        musicChunks.uuid_image = RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART;
+        musicChunks.uuid_ready = RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY;
+        customImageChunks.uuid_image = RavenConstants.UUID_CHARACTERISTIC_CUSTOM_IMAGE_DATA;
+        customImageChunks.uuid_ready = RavenConstants.UUID_CHARACTERISTIC_CUSTOM_IMAGE_READY;
+
         builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY), true);
+        builder.notify(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_CUSTOM_IMAGE_READY), true);
 
         onSetTime();  // Time sync, write AFTER preferences and face
 
@@ -185,15 +199,25 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
             return true;
         }
         // Album art chunking handling
-        else if (characteristicUUID.equals(RavenConstants.UUID_CHARACTERISTIC_MUSIC_READY)) {
+        else if (characteristicUUID.equals(musicChunks.uuid_ready)) {
             switch (value[0]) {
                 case NEED_DATA:
-                    sendNextChunk();
+                    sendNextChunk(musicChunks);
                     break;
                 case DONE_DATA:
-                    TransactionBuilder builder = createTransactionBuilder("finishMusic");
-                    builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
-                    builder.queue();
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+        // Custom image chunking handling
+        else if (characteristicUUID.equals(customImageChunks.uuid_ready)) {
+            switch (value[0]) {
+                case NEED_DATA:
+                    sendNextChunk(customImageChunks);
+                    break;
+                case DONE_DATA:
                     break;
                 default:
                     return false;
@@ -394,16 +418,64 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
         return out;
     }
 
-    private void sendNextChunk() {
-        TransactionBuilder builder = createTransactionBuilder("setMusicChunk");
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunks[chunksIndex.get()]);
-        chunksIndex.incrementAndGet();
+    private void sendNextChunk(ImageChunks imageChunks) {
+        if (imageChunks.chunkIndex.get() >= imageChunks.chunks.length) return;
+        TransactionBuilder builder = createTransactionBuilder("sendNextChunk");
+        builder.write(getCharacteristic(imageChunks.uuid_image), imageChunks.chunks[imageChunks.chunkIndex.get()]);
+        imageChunks.chunkIndex.incrementAndGet();
         builder.queue();
     }
 
-    private void sendNextChunk(TransactionBuilder builder) {
-        builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_ALBUM_ART), chunks[chunksIndex.get()]);
-        chunksIndex.incrementAndGet();
+    private void sendNextChunk(TransactionBuilder builder, ImageChunks imageChunks) {
+        if (imageChunks.chunkIndex.get() >= imageChunks.chunks.length) return;
+        builder.write(getCharacteristic(imageChunks.uuid_image), imageChunks.chunks[imageChunks.chunkIndex.get()]);
+        imageChunks.chunkIndex.incrementAndGet();
+    }
+
+    private byte[] bitmapToImageData(Bitmap bitmap) {
+        if (bitmap.getWidth() < 200) {
+            bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
+            bitmap.eraseColor(Color.WHITE);
+        }
+
+        // Resize image to 200x200, convert to grayscale, stucki dither to BW, compress byte-per-pixel to bit-per-pixel
+
+        // Resize image
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, 200, 200, false);
+
+        // Convert resized bitmap to monochrome
+        Bitmap gscaleBitmap = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(gscaleBitmap);
+        Paint paint = new Paint();
+        ColorMatrix cm = new ColorMatrix();
+        cm.setSaturation(0);
+        paint.setColorFilter(new ColorMatrixColorFilter(cm));
+        canvas.drawBitmap(resizedBitmap, 0, 0, paint);
+
+        Bitmap bwBitmap = stucki(gscaleBitmap);
+
+        // Convert byte-per-pixel bitmap to bit-per-pixel array
+        byte[] bytesCompacted = new byte[(bwBitmap.getHeight() / 8) * bwBitmap.getWidth()];
+        for (int y = 0; y < bwBitmap.getHeight(); y++) {
+            for (int x = 0; x < bwBitmap.getWidth(); x++) {
+                int pixel = bwBitmap.getPixel(x, y);
+                int red = Color.red(pixel); // All channels are either 0 or 255, just check red
+
+                // Convert pixel to 0 (black) or 1 (white)
+                // But as this is already dithered in BW
+                int binaryValue = (red == 255) ? 1 : 0;
+
+                // Find the index of the byte and the position in that byte
+                int byteIndex = (y * bwBitmap.getWidth() + x) / 8;
+                int bitIndex = (y * bwBitmap.getHeight() + x) % 8;
+
+                // Set the corresponding bit in the byte
+                if (binaryValue == 1) {
+                    bytesCompacted[byteIndex] |= (byte) (1 << (7 - bitIndex)); // Set the bit at the correct position
+                }
+            }
+        }
+        return bytesCompacted;
     }
 
     @Override
@@ -422,9 +494,6 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
                 musicSpec.album = "";
             }
             if (musicSpec.albumArt.getWidth() < 200) {
-                musicSpec.albumArt = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888);
-                musicSpec.albumArt.eraseColor(Color.WHITE);
-
                 lastArtist = "";
                 lastTrack = "";
                 lastAlbum = "";
@@ -448,60 +517,23 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
                 lastAlbum = musicSpec.album;
             }
             if (!musicSpec.albumArt.equals(lastAlbumArt)) {
-                // Resize image to 200x200, convert to grayscale, stucki dither to BW, compress byte-per-pixel to bit-per-pixel
-
-                // Resize image
-                Bitmap resizedBitmap = Bitmap.createScaledBitmap(musicSpec.albumArt, 200, 200, false);
-
-                // Convert resized bitmap to monochrome
-                Bitmap gscaleBitmap = Bitmap.createBitmap(resizedBitmap.getWidth(), resizedBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-                Canvas canvas = new Canvas(gscaleBitmap);
-                Paint paint = new Paint();
-                ColorMatrix cm = new ColorMatrix();
-                cm.setSaturation(0);
-                paint.setColorFilter(new ColorMatrixColorFilter(cm));
-                canvas.drawBitmap(resizedBitmap, 0, 0, paint);
-
-                Bitmap bwBitmap = stucki(gscaleBitmap);
-
-                // Convert byte-per-pixel bitmap to bit-per-pixel array
-                byte[] bytesCompacted = new byte[(bwBitmap.getHeight() / 8) * bwBitmap.getWidth()];
-                for (int y = 0; y < bwBitmap.getHeight(); y++) {
-                    for (int x = 0; x < bwBitmap.getWidth(); x++) {
-                        int pixel = bwBitmap.getPixel(x, y);
-                        int red = Color.red(pixel); // All channels are either 0 or 255, just check red
-
-                        // Convert pixel to 0 (black) or 1 (white)
-                        // But as this is already dithered in BW
-                        int binaryValue = (red == 255) ? 1 : 0;
-
-                        // Find the index of the byte and the position in that byte
-                        int byteIndex = (y * bwBitmap.getWidth() + x) / 8;
-                        int bitIndex = (y * bwBitmap.getHeight() + x) % 8;
-
-                        // Set the corresponding bit in the byte
-                        if (binaryValue == 1) {
-                            bytesCompacted[byteIndex] |= (byte) (1 << (7 - bitIndex)); // Set the bit at the correct position
-                        }
-                    }
-                }
+                byte[] bytesCompacted = bitmapToImageData(musicSpec.albumArt);
 
                 // Write 512-byte chunks with 1 byte index and 511 bytes data
-                chunks = new byte[21][240];
-                chunksIndex.set(0);
+                musicChunks.chunks = new byte[21][240];
+                musicChunks.chunkIndex.set(0);
+
                 for (int i = 0; i < 21; ++i) {
-                    chunks[i][0] = (byte) i;
+                    musicChunks.chunks[i][0] = (byte) i;
                     int available = bytesCompacted.length - (i * chunkDataSize);
                     if (available > chunkDataSize) available = chunkDataSize;
-                    System.arraycopy(bytesCompacted, (i * chunkDataSize), chunks[i], 1, available);
+                    System.arraycopy(bytesCompacted, (i * chunkDataSize), musicChunks.chunks[i], 1, available);
                 }
                 lastAlbumArt = musicSpec.albumArt;
 
-                sendNextChunk(builder);
+                sendNextChunk(builder, musicChunks);
             }
 
-            // Remove this trigger when using album art
-            //builder.write(getCharacteristic(RavenConstants.UUID_CHARACTERISTIC_MUSIC_TRIGGER), new byte[]{TRIGGER_SET});
             builder.queue();
         } catch (Exception e) {
             LOG.error("Error sending music info", e);
@@ -663,13 +695,21 @@ public class RavenSupport extends AbstractBTLESingleDeviceSupport {
                 return;
             case PREF_RAVEN_IMAGE_UPLOAD:
                 OneShotImagePicker.pickImage(getContext(), bitmap -> {
-                    // Re-use music image upload instead of refactoring everything ;)
-                    MusicSpec fakeAlbumArt = new MusicSpec();
-                    fakeAlbumArt.artist = "";
-                    fakeAlbumArt.track = "";
-                    fakeAlbumArt.album = "";
-                    fakeAlbumArt.albumArt = bitmap;
-                    onSetMusicInfo(fakeAlbumArt);
+                    byte[] bytesCompacted = bitmapToImageData(bitmap);
+
+                    // Write 512-byte chunks with 1 byte index and 511 bytes data
+                    customImageChunks.chunks = new byte[21][240];
+                    customImageChunks.chunkIndex.set(0);
+
+                    for (int i = 0; i < 21; ++i) {
+                        customImageChunks.chunks[i][0] = (byte) i;
+                        int available = bytesCompacted.length - (i * chunkDataSize);
+                        if (available > chunkDataSize) available = chunkDataSize;
+                        System.arraycopy(bytesCompacted, (i * chunkDataSize), customImageChunks.chunks[i], 1, available);
+                    }
+
+                    sendNextChunk(builder, customImageChunks);
+                    builder.queue();
                 });
                 return;
             case PREF_DARK_MODE:
